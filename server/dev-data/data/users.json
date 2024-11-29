@@ -1,0 +1,93 @@
+[
+    {
+        "username": "jdoe",
+        "password": "12345678",
+        "email": "john.doe@example.com",
+        "firstName": "John",
+        "lastName": "Doe",
+        "phone": "+1 234 5678900",
+        "department": "Software Development",
+        "program": "Software Development - Diploma",
+        "isAdmin": false,
+        "courses": [
+            {
+                "code": "CS101",
+                "name": "Introduction to Programming",
+                "description": "This course provides an introduction to the fundamentals of computer programming, focusing on problem-solving, algorithmic thinking, and the principles of structured programming. Using Python, students will learn essential programming concepts such as variables, loops, conditional statements, and functions. By the end of the course, students will be able to design and implement basic programs, debug errors, and understand how programming solves real-world problems. This foundational knowledge is critical for all subsequent programming courses.",
+                "credits": 3,
+                "prerequisites": "None",
+                "term": "Winter",
+                "startDate": "2023-01-10",
+                "endDate": "2023-04-10",
+                "time": "10:00 AM - 12:00 PM",
+                "days": "Monday, Wednesday",
+                "campus": "Calgary",
+                "deliveryMode": "Face to Face"
+            },
+            {
+                "code": "CS102",
+                "name": "Web Development",
+                "description": "This course introduces students to the fundamentals of web development, covering key technologies such as HTML, CSS, and JavaScript. Students will learn how to create interactive and responsive web pages that function seamlessly across various devices. The course also explores web hosting, domain management, and the basics of user experience (UX) design. Practical projects will enable students to build and maintain functional websites, emphasizing front-end development techniques and best practices.",
+                "credits": 3,
+                "prerequisites": "CS101",
+                "term": "Spring",
+                "startDate": "2023-04-15",
+                "endDate": "2023-07-15",
+                "time": "2:00 PM - 4:00 PM",
+                "days": "Tuesday, Thursday",
+                "campus": "Calgary",
+                "deliveryMode": "Online Asynchronous"
+            },
+            {
+                "code": "CS201",
+                "name": "Data Structures and Algorithms",
+                "description": "This course delves into essential data structures and algorithms that are fundamental to efficient software development. Topics include arrays, linked lists, stacks, queues, trees, and graphs, as well as sorting, searching, and traversal algorithms. Students will learn to analyze the time and space complexity of algorithms and select appropriate data structures to optimize performance. Practical assignments will reinforce the theoretical concepts, enabling students to solve complex computational problems effectively.",
+                "credits": 4,
+                "prerequisites": "CS101",
+                "term": "Summer",
+                "startDate": "2023-07-05",
+                "endDate": "2023-10-05",
+                "time": "9:00 AM - 11:00 AM",
+                "days": "Monday, Wednesday",
+                "campus": "Calgary",
+                "deliveryMode": "Online Synchronous"
+            }
+        ]
+    },
+    {
+        "username": "asmith",
+        "password": "password",
+        "email": "allan.smith@example.com",
+        "firstName": "Allan",
+        "lastName": "Smith",
+        "phone": "+1 403 5678900",
+        "department": "Software Development",
+        "program": "Software Development - Post Diploma",
+        "isAdmin": false,
+        "courses": []
+    },
+    {
+        "username": "admin",
+        "password": "admin123",
+        "email": "admin@example.com",
+        "firstName": "Rudy",
+        "lastName": "Gabuco",
+        "phone": "+1 403 1234567",
+        "department": "Software Development",
+        "program": "Software Development - Diploma",
+        "isAdmin": true,
+        "courses": []
+    },
+    {
+        "username": "submax",
+        "password": "submax12",
+        "email": "submax@example.com",
+        "firstName": "Submax",
+        "lastName": "Max",
+        "phone": "+1 403 4234066",
+        "department": "Software Development",
+        "program": "Software Development - Diploma",
+        "isAdmin": true,
+        "courses": []
+    }
+]
