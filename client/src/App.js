@@ -21,76 +21,76 @@ import StudentList from "./pages/StudentList";
 import Forms from "./pages/Forms";
 
 function App() {
-  return (
-    <Router>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-        }}
-      >
-        <Main />
-      </Box>
-    </Router>
-  );
+    return (
+        <Router>
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: "100vh",
+                }}
+            >
+                <Main />
+            </Box>
+        </Router>
+    );
 }
 
 function Main() {
-  const location = useLocation();
-  const noNavbarPaths = [
-    "/login",
-    "/programs",
-    "/courses",
-    "/about",
-    "/contact",
-    "/signup",
-    "/dashboard",
-    "/profile",
-    "/my-courses",
-    "/add-courses",
-    "/contact-support",
-    "/adm-courses",
-    "/adm-add-courses",
-    "/student-list",
-    "/forms",
-  ];
-  const showNavbar = !noNavbarPaths.includes(location.pathname);
+    const location = useLocation();
+    const noNavbarPaths = [
+        "/login",
+        "/programs",
+        "/courses",
+        "/about",
+        "/contact",
+        "/signup",
+        "/dashboard",
+        "/profile",
+        "/my-courses",
+        "/add-courses",
+        "/contact-support",
+        "/adm-courses",
+        "/adm-add-courses",
+        "/student-list",
+        "/forms",
+    ];
+    const showNavbar = !noNavbarPaths.includes(location.pathname);
 
-  return (
-    <>
-      {showNavbar && <Navbar />}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          py: 3,
-          mt: 8, // Add margin-top to avoid content being hidden behind the fixed Navbar
-        }}
-      >
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/programs" element={<Programs />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/my-courses" element={<MyCourses />} />
-          <Route path="/add-courses" element={<AddCourses />} />
-          <Route path="/contact-support" element={<ContactSupport />} />
-          <Route path="/adm-courses" element={<AdmCourses />} />
-          <Route path="/adm-add-courses" element={<AdmAddCourses />} />
-          <Route path="/student-list" element={<StudentList />} />
-          <Route path="/forms" element={<Forms />} />
-        </Routes>
-      </Box>
-      <Footer />
-    </>
-  );
+    return (
+        <>
+            {showNavbar && <Navbar />}
+            <Box
+                component="main"
+                sx={{
+                    flexGrow: 1,
+                    py: 3,
+                    mt: 8, // Add margin-top to avoid content being hidden behind the fixed Navbar
+                }}
+            >
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/home" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/programs" element={<Programs />} />
+                    <Route path="/courses" element={<Courses />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/my-courses" element={<MyCourses />} />
+                    <Route path="/add-courses" element={<AddCourses />} />
+                    <Route path="/contact-support" element={<ContactSupport />} />
+                    <Route path="/adm-courses" element={<AdmCourses />} />
+                    <Route path="/adm-add-courses" element={<AdmAddCourses />} />
+                    <Route path="/student-list" element={<StudentList />} />
+                    <Route path="/forms" element={<Forms />} />
+                </Routes>
+            </Box>
+            <Footer />
+        </>
+    );
 }
 
 export default App;
