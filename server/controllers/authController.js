@@ -11,18 +11,18 @@ const signToken = (user) => {
 };
 
 exports.login = catchAsync(async (req, res, next) => {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    // Check if email and password exist
-    if (!email || !password) {
-        return next(new AppError('Please provide email and password!', 400));
+    // Check if username and password exist
+    if (!username || !password) {
+        return next(new AppError('Please provide username and password!', 400));
     }
 
     // Check if user exists && password is correct
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ username }).select('+password');
 
     if (!user || !(await user.correctPassword(password, user.password))) {
-        return next(new AppError('Incorrect email or password', 401));
+        return next(new AppError('Incorrect username or password', 401));
     }
 
     // If everything is ok, send token to client
@@ -31,6 +31,13 @@ exports.login = catchAsync(async (req, res, next) => {
     res.status(200).json({
         status: 'success',
         token,
+        data: {
+            user: {
+                id: user._id,
+                username: user.username,
+                isAdmin: user.isAdmin,
+            },
+        },
     });
 });
 
@@ -56,7 +63,7 @@ exports.isAdmin = catchAsync(async (req, res, next) => {
     }
 
     if (!token) {
-        return next(new AppError('You are not logged in! Please log in to get access.', 401,));
+        return next(new AppError('You are not logged in! Please log in to get access.', 401));
     }
 
     // Verification token
@@ -66,7 +73,7 @@ exports.isAdmin = catchAsync(async (req, res, next) => {
     // Check if user still exists
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
-        return next(new AppError('The user belonging to this token does no longer exist.', 401,));
+        return next(new AppError('The user belonging to this token does no longer exist.', 401));
     }
 
     // Check if the user is an admin
