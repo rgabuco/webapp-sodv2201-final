@@ -1,471 +1,486 @@
 import React, { useState, useEffect } from "react";
 import {
-  Container,
-  Typography,
-  Paper,
-  Grid,
-  List,
-  ListItem,
-  Button,
-  Chip,
-  IconButton,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Box,
+    Container,
+    Typography,
+    Paper,
+    Grid,
+    List,
+    ListItem,
+    Button,
+    Chip,
+    IconButton,
+    TextField,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Box,
 } from "@mui/material";
-import { Calendar } from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
+import { Calendar } from "react-calendar";
+import "react-calendar/dist/Calendar.css";
 import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
-import coursesData from '../utils/data/Courses';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import dayjs from 'dayjs';
-import PersonIcon from '@mui/icons-material/Person';
-import { Gauge } from '@mui/x-charts';
+import coursesData from "../utils/data/Courses";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs";
+import PersonIcon from "@mui/icons-material/Person";
+import { Gauge } from "@mui/x-charts";
+import axios from "axios";
+import { getUserLoggedIn, getUserIdFromToken, isAdministrator } from "../utils/authUtils"; // Import the getUserLoggedIn function
 
 function Dashboard() {
-  const [loggedInUser, setLoggedInUser] = useState(null);
-  const [status, setStatus] = useState("Not Enrolled");
-  const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [courseSchedule, setCourseSchedule] = useState({});
-  const [value, setValue] = useState(dayjs());
-  const [editingEvent, setEditingEvent] = useState(null);
-  const [eventDate, setEventDate] = useState(dayjs());
-  const [eventName, setEventName] = useState("");
-  const [studentsData, setStudentsData] = useState([]);
+    const [loggedInUser, setLoggedInUser] = useState(null);
+    const [status, setStatus] = useState("Not Enrolled");
+    const [upcomingEvents, setUpcomingEvents] = useState([]);
+    const [courseSchedule, setCourseSchedule] = useState({});
+    const [value, setValue] = useState(dayjs());
+    const [editingEvent, setEditingEvent] = useState(null);
+    const [eventDate, setEventDate] = useState(dayjs());
+    const [eventName, setEventName] = useState("");
+    const [studentsData, setStudentsData] = useState([]);
 
-  // Function to save events to local storage
-  const saveEventsToLocalStorage = (events) => {
-    try {
-      if (typeof window !== "undefined" && window.localStorage) {
-        localStorage.setItem("upcomingEvents", JSON.stringify(events));
-        console.log("Events saved to localStorage:", events); // Debugging log
-      } else {
-        console.error("localStorage is not available");
-      }
-    } catch (error) {
-      console.error("Error saving to localStorage:", error);
-    }
-  };
-
-  useEffect(() => {
-    const storedUsers = JSON.parse(localStorage.getItem("bvc-users")) || [];
-    const currentUsername = localStorage.getItem("userLoggedIn");
-    const currentUser = storedUsers.find((user) => user.username === currentUsername);
-
-    if (currentUser) {
-      setLoggedInUser(currentUser);
-      if (currentUser.isAdmin === true) {
-        setStatus("Admin");
-
-        const students = storedUsers.filter((user) => !user.isAdmin);
-        const studentEnrollmentData = students.map((student) => ({
-          name: student.firstName + " " + student.lastName,
-          id: student.id,
-          program: student.program,
-          department: student.department,
-          coursesCount: student.courses.length,
-        }));
-        setStudentsData(studentEnrollmentData);
-      } else {
-        currentUser.courses = currentUser.courses || [];
-        if (currentUser.courses.length > 0) {
-          setStatus("Enrolled");
-          generateCourseSchedule(currentUser.courses);
-        } else {
-          setStatus("Not Enrolled");
+    // Function to save events to local storage
+    const saveEventsToLocalStorage = events => {
+        try {
+            if (typeof window !== "undefined" && window.localStorage) {
+                localStorage.setItem("upcomingEvents", JSON.stringify(events));
+                console.log("Events saved to localStorage:", events); // Debugging log
+            } else {
+                console.error("localStorage is not available");
+            }
+        } catch (error) {
+            console.error("Error saving to localStorage:", error);
         }
-      }
-    }
+    };
 
-    // Load upcoming events from local storage
-    const storedEvents = JSON.parse(localStorage.getItem("upcomingEvents")) || [];
-    setUpcomingEvents(storedEvents);
-    console.log("Loaded events from localStorage:", storedEvents); // Debugging log
-  }, []);
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const userId = getUserIdFromToken();
+                const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                const currentUser = response.data.data.user;
 
-  useEffect(() => {
-    // Save upcoming events to local storage whenever they change
-    if (upcomingEvents.length > 0) {
-      saveEventsToLocalStorage(upcomingEvents);
-    }
-  }, [upcomingEvents]);
+                if (currentUser) {
+                    setLoggedInUser(currentUser);
+                    if (currentUser.isAdmin === true) {
+                        setStatus("Admin");
 
-  const generateCourseSchedule = (courseCodes) => {
-    const schedule = {};
-    courseCodes.forEach((code) => {
-      const course = findCourseByCode(code);
-      if (course) {
-        const courseStartDate = new Date(course.startDate);
-        const courseEndDate = new Date(course.endDate);
-        for (let d = courseStartDate; d <= courseEndDate; d.setDate(d.getDate() + 1)) {
-          const dateString = d.toISOString().split('T')[0];
-          if (!schedule[dateString]) {
-            schedule[dateString] = [];
-          }
-          schedule[dateString].push(course.name);
+                        const studentsResponse = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users`, {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        });
+                        const storedUsers = studentsResponse.data.data.users;
+                        const students = storedUsers.filter(user => !user.isAdmin);
+                        const studentEnrollmentData = students.map(student => ({
+                            name: student.firstName + " " + student.lastName,
+                            id: student.id,
+                            program: student.program,
+                            department: student.department,
+                            coursesCount: student.courses.length,
+                        }));
+                        setStudentsData(studentEnrollmentData);
+                    } else {
+                        currentUser.courses = currentUser.courses || [];
+                        if (currentUser.courses.length > 0) {
+                            setStatus("Enrolled");
+                            generateCourseSchedule(currentUser.courses);
+                        } else {
+                            setStatus("Not Enrolled");
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user:", error);
+            }
+        };
+
+        fetchUser();
+
+        // Load upcoming events from local storage
+        const storedEvents = JSON.parse(localStorage.getItem("upcomingEvents")) || [];
+        setUpcomingEvents(storedEvents);
+        console.log("Loaded events from localStorage:", storedEvents); // Debugging log
+    }, []);
+
+    useEffect(() => {
+        // Save upcoming events to local storage whenever they change
+        if (upcomingEvents.length > 0) {
+            saveEventsToLocalStorage(upcomingEvents);
         }
-      }
-    });
-    setCourseSchedule(schedule);
-  };
+    }, [upcomingEvents]);
 
-  const findCourseByCode = (code) => {
-    for (const program in coursesData) {
-      const course = coursesData[program].find(course => course.code === code);
-      if (course) {
-        return course;
-      }
-    }
-    return null;
-  };
+    const generateCourseSchedule = courseCodes => {
+        const schedule = {};
+        courseCodes.forEach(code => {
+            const course = findCourseByCode(code);
+            if (course) {
+                const courseStartDate = new Date(course.startDate);
+                const courseEndDate = new Date(course.endDate);
+                for (let d = courseStartDate; d <= courseEndDate; d.setDate(d.getDate() + 1)) {
+                    const dateString = d.toISOString().split("T")[0];
+                    if (!schedule[dateString]) {
+                        schedule[dateString] = [];
+                    }
+                    schedule[dateString].push(course.name);
+                }
+            }
+        });
+        setCourseSchedule(schedule);
+    };
 
-  const handleDateChange = (date) => {
-    setValue(dayjs(date));
-  };
+    const findCourseByCode = code => {
+        for (const program in coursesData) {
+            const course = coursesData[program].find(course => course.code === code);
+            if (course) {
+                return course;
+            }
+        }
+        return null;
+    };
 
-  const handleEditEvent = (event) => {
-    setEditingEvent(event);
-    setEventDate(dayjs(event.date));
-    setEventName(event.event);
-  };
+    const handleDateChange = date => {
+        setValue(dayjs(date));
+    };
 
-  const handleSaveEvent = () => {
-    if (editingEvent) {
-      setUpcomingEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.date === editingEvent.date ? { ...event, event: eventName } : event
-        )
-      );
-      setEditingEvent(null);
-    }
-    setEventDate(dayjs());
-    setEventName("");
-  };
+    const handleEditEvent = event => {
+        setEditingEvent(event);
+        setEventDate(dayjs(event.date));
+        setEventName(event.event);
+    };
 
-  const handleDeleteEvent = (eventDate, eventName) => {
-    setUpcomingEvents((prevEvents) =>
-      prevEvents.filter(event => !(event.date === eventDate && event.event === eventName))
-    );
-  };
+    const handleSaveEvent = () => {
+        if (editingEvent) {
+            setUpcomingEvents(prevEvents => prevEvents.map(event => (event.date === editingEvent.date ? { ...event, event: eventName } : event)));
+            setEditingEvent(null);
+        }
+        setEventDate(dayjs());
+        setEventName("");
+    };
 
-  const handleAddEvent = () => {
-    if (eventName && eventDate) {
-      const eventTime = eventDate.format('HH:mm'); // Format the time as needed
-      setUpcomingEvents([...upcomingEvents, { date: eventDate.format('MM-DD-YYYY'), event: eventName, time: eventTime }]);
-      setEventName("");
-      setEventDate(dayjs());
-    }
-  };  
+    const handleDeleteEvent = (eventDate, eventName) => {
+        setUpcomingEvents(prevEvents => prevEvents.filter(event => !(event.date === eventDate && event.event === eventName)));
+    };
 
-  const getEventsForDate = (date) => {
-    const dateString = date.format('MM-DD-YYYY');
-    return upcomingEvents.filter(event => event.date === dateString);
-  };
+    const handleAddEvent = () => {
+        if (eventName && eventDate) {
+            const eventTime = eventDate.format("HH:mm"); // Format the time as needed
+            setUpcomingEvents([...upcomingEvents, { date: eventDate.format("MM-DD-YYYY"), event: eventName, time: eventTime }]);
+            setEventName("");
+            setEventDate(dayjs());
+        }
+    };
 
-  const selectedEvents = getEventsForDate(value);
+    const getEventsForDate = date => {
+        const dateString = date.format("MM-DD-YYYY");
+        return upcomingEvents.filter(event => event.date === dateString);
+    };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Enrolled":
-        return "green";
-      case "Not Enrolled":
-        return "red";
-      case "Admin":
-        return "blue";
-      default:
-        return "black";
-    }
-  };
+    const selectedEvents = getEventsForDate(value);
 
-  const enrolledCount = studentsData.filter(student => student.coursesCount > 0).length;
-const totalStudentsCount = studentsData.length; // Total number of students
-const totalEventsRegistered = upcomingEvents.length; // Count of registered events
+    const getStatusColor = status => {
+        switch (status) {
+            case "Enrolled":
+                return "green";
+            case "Not Enrolled":
+                return "red";
+            case "Admin":
+                return "blue";
+            default:
+                return "black";
+        }
+    };
 
-const gauge = [
-  {
-    value: enrolledCount,
-    minvalue: 0,
-    maxvalue: totalStudentsCount,
-    label: `Enrolled Students: ${enrolledCount}`,
-    color: "#4CAF50",
-    sx: { width: '30%', height: '100%' } // Ensure Gauge takes full height
-  },
-  {
-    value: totalStudentsCount, // Use the correct variable name here
-    minvalue: 0,
-    maxvalue: totalStudentsCount,
-    label: `Total Students: ${totalStudentsCount}`, // Update label accordingly
-    color: "warning",
-    sx: { width: '30%', height: '100%' } // Ensure Gauge takes full height
-  },
-  {
-    value: totalEventsRegistered,
-    minvalue: 0,
-    maxvalue: totalEventsRegistered,
-    label: `Total Events Registered: ${totalEventsRegistered}`, // Update label accordingly
-    color: "info",
-    sx: { width: '30%', height: '100%' } // Ensure Gauge takes full height
-  }
-];
+    const enrolledCount = studentsData.filter(student => student.coursesCount > 0).length;
+    const totalStudentsCount = studentsData.length; // Total number of students
+    const totalEventsRegistered = upcomingEvents.length; // Count of registered events
 
-  return (
-    <div>
-      <Navbar rightMenu={<ProfileMenu />} />
+    const gauge = [
+        {
+            value: enrolledCount,
+            minvalue: 0,
+            maxvalue: totalStudentsCount,
+            label: `Enrolled Students: ${enrolledCount}`,
+            color: "#4CAF50",
+            sx: { width: "30%", height: "100%" }, // Ensure Gauge takes full height
+        },
+        {
+            value: totalStudentsCount, // Use the correct variable name here
+            minvalue: 0,
+            maxvalue: totalStudentsCount,
+            label: `Total Students: ${totalStudentsCount}`, // Update label accordingly
+            color: "warning",
+            sx: { width: "30%", height: "100%" }, // Ensure Gauge takes full height
+        },
+        {
+            value: totalEventsRegistered,
+            minvalue: 0,
+            maxvalue: totalEventsRegistered,
+            label: `Total Events Registered: ${totalEventsRegistered}`, // Update label accordingly
+            color: "info",
+            sx: { width: "30%", height: "100%" }, // Ensure Gauge takes full height
+        },
+    ];
 
-      <Container maxWidth="lg" sx={{ mt: 5, color: "#34405E" }}>
-        <Typography variant="h4" gutterBottom sx={{ mb: 3, textAlign: "center" }}>
-          Dashboard
-        </Typography>
-{/* Centered Calendar and Upcoming Events Section */}
-<Grid container spacing={2} justifyContent="center" sx={{ mb: 0.5 }}>
-  <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: 'right' }}>
-    <Paper
-      elevation={3}
-      sx={{
-        padding: 0.5,
-        maxWidth: 650,
-        width: '100%',
-        height: '400px', // Set a fixed height for the entire section
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between', // Distribute space between the title, calendar, and events list
-        alignItems: 'center',
-      }}
-    >
-      {/* Title */}
-      <Typography variant="h6" sx={{ mb: 1, fontSize: '0.8rem', textAlign: 'center' }}>
-        Course Schedule
-      </Typography>
+    return (
+        <div>
+            <Navbar rightMenu={<ProfileMenu />} />
 
-      {/* Calendar Section */}
-      <Box sx={{ 
-        width: '100%',
-        flexGrow: 1,                // Allow the calendar to grow and fill available space
-        display: 'flex',
-        justifyContent: 'center',   // Center horizontally
-        alignItems: 'center',       // Center vertically
-      }}>
-        <Calendar
-          onChange={handleDateChange}
-          value={value.toDate()}
-          sx={{ width: '100%', height: 'auto' }}
-        />
-      </Box>
-
-      {/* Events List */}
-      <Typography variant="subtitle1" sx={{ mt: 1, fontSize: '0.75rem', textAlign: 'center' }}>
-        Events on {value.format('MMMM D, YYYY')}:
-      </Typography>
-      <Box
-        sx={{
-          maxHeight: '150px',
-          overflowY: 'auto',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        {selectedEvents.length > 0 ? (
-          <List dense>
-            {selectedEvents.map((event, index) => (
-              <ListItem key={index} sx={{ padding: 0 }}>
-                <Typography variant="body2" sx={{ fontSize: '1rem', textAlign: 'center' }}>
-                  {event.event} at {event.time}
+            <Container maxWidth="lg" sx={{ mt: 5, color: "#34405E" }}>
+                <Typography variant="h4" gutterBottom sx={{ mb: 3, textAlign: "center" }}>
+                    Dashboard
                 </Typography>
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Typography variant="body2" sx={{ fontSize: '0.7rem', textAlign: 'center' }}>
-            No events
-          </Typography>
-        )}
-      </Box>
-  </Paper>
-</Grid>
+                {/* Centered Calendar and Upcoming Events Section */}
+                <Grid container spacing={2} justifyContent="center" sx={{ mb: 0.5 }}>
+                    <Grid item xs={12} sm={6} sx={{ display: "flex", justifyContent: "right" }}>
+                        <Paper
+                            elevation={3}
+                            sx={{
+                                padding: 0.5,
+                                maxWidth: 650,
+                                width: "100%",
+                                height: "400px", // Set a fixed height for the entire section
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "space-between", // Distribute space between the title, calendar, and events list
+                                alignItems: "center",
+                            }}
+                        >
+                            {/* Title */}
+                            <Typography variant="h6" sx={{ mb: 1, fontSize: "0.8rem", textAlign: "center" }}>
+                                Course Schedule
+                            </Typography>
 
-<Grid item xs={12} sm={6}>
-  <Paper
-    elevation={3}
-    sx={{
-      padding: 0.5,
-      maxWidth: 650,
-      width: '100%',
-      height: '400px', // Set a fixed height for the entire section
-      display: 'flex',
-      flexDirection: 'column',
-    }}
-  >
-    <Typography variant="h6" sx={{ mb: 1, fontSize: '0.8rem', textAlign: 'center' }}>
-      Upcoming Events
-    </Typography>
-    
-    <Box sx={{ flexGrow: 1, overflowY: 'auto' }}> {/* Flex-grow to fill available space */}
-      <Grid container spacing={1}>
-        {upcomingEvents.map((event, index) => (
-          <Grid item key={index}>
+                            {/* Calendar Section */}
+                            <Box
+                                sx={{
+                                    width: "100%",
+                                    flexGrow: 1, // Allow the calendar to grow and fill available space
+                                    display: "flex",
+                                    justifyContent: "center", // Center horizontally
+                                    alignItems: "center", // Center vertically
+                                }}
+                            >
+                                <Calendar onChange={handleDateChange} value={value.toDate()} sx={{ width: "100%", height: "auto" }} />
+                            </Box>
 
-    <Chip
-      label={`${event.date}: ${event.event}`}
-      variant="outlined"
-      color="primary"
-      sx={{ fontSize: '0.7rem', borderRadius: '16px' }}
-      deleteIcon={loggedInUser?.isAdmin ? (
-        <IconButton size="small" onClick={() => handleDeleteEvent(event.date, event.event)}>
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-  ) : null}
-  onDelete={loggedInUser?.isAdmin ? () => handleDeleteEvent(event.date, event.event) : undefined}
-  onClick={() => loggedInUser?.isAdmin && handleEditEvent(event)}
-/>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
+                            {/* Events List */}
+                            <Typography variant="subtitle1" sx={{ mt: 1, fontSize: "0.75rem", textAlign: "center" }}>
+                                Events on {value.format("MMMM D, YYYY")}:
+                            </Typography>
+                            <Box
+                                sx={{
+                                    maxHeight: "150px",
+                                    overflowY: "auto",
+                                    width: "100%",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                }}
+                            >
+                                {selectedEvents.length > 0 ? (
+                                    <List dense>
+                                        {selectedEvents.map((event, index) => (
+                                            <ListItem key={index} sx={{ padding: 0 }}>
+                                                <Typography variant="body2" sx={{ fontSize: "1rem", textAlign: "center" }}>
+                                                    {event.event} at {event.time}
+                                                </Typography>
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                ) : (
+                                    <Typography variant="body2" sx={{ fontSize: "0.7rem", textAlign: "center" }}>
+                                        No events
+                                    </Typography>
+                                )}
+                            </Box>
+                        </Paper>
+                    </Grid>
 
-    {loggedInUser?.isAdmin && (
-      <>
-        <Typography variant="h6" sx={{ mb: 1, mt: 2 }}>
-          Add/Edit Event
-        </Typography>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DateTimePicker
-            label="Event Date"
-            value={eventDate}
-            onChange={setEventDate}
-            textField={<TextField />} // Use textField prop instead of renderInput
-          />
-        </LocalizationProvider>
+                    <Grid item xs={12} sm={6}>
+                        <Paper
+                            elevation={3}
+                            sx={{
+                                padding: 0.5,
+                                maxWidth: 650,
+                                width: "100%",
+                                height: "400px", // Set a fixed height for the entire section
+                                display: "flex",
+                                flexDirection: "column",
+                            }}
+                        >
+                            <Typography variant="h6" sx={{ mb: 1, fontSize: "0.8rem", textAlign: "center" }}>
+                                Upcoming Events
+                            </Typography>
 
-        <TextField
-          label="Event Name"
-          value={eventName}
-          onChange={(e) => setEventName(e.target.value)}
-          sx={{ mt: 2, width: '100%' }}
-        />
-        <Button
-          variant="contained"
-          onClick={editingEvent ? handleSaveEvent : handleAddEvent}
-          sx={{ mt: 1 }}
-        >
-          {editingEvent ? 'Save Event' : 'Add Event'}
-        </Button>
-      </>
-    )}
-    </Paper>
-  </Grid>
-</Grid>
+                            <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+                                {" "}
+                                {/* Flex-grow to fill available space */}
+                                <Grid container spacing={1}>
+                                    {upcomingEvents.map((event, index) => (
+                                        <Grid item key={index}>
+                                            <Chip
+                                                label={`${event.date}: ${event.event}`}
+                                                variant="outlined"
+                                                color="primary"
+                                                sx={{ fontSize: "0.7rem", borderRadius: "16px" }}
+                                                deleteIcon={
+                                                    loggedInUser?.isAdmin ? (
+                                                        <IconButton size="small" onClick={() => handleDeleteEvent(event.date, event.event)}>
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    ) : null
+                                                }
+                                                onDelete={loggedInUser?.isAdmin ? () => handleDeleteEvent(event.date, event.event) : undefined}
+                                                onClick={() => loggedInUser?.isAdmin && handleEditEvent(event)}
+                                            />
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            </Box>
 
-{ /*User Details Section*/}
-<Paper sx={{ padding: 3, mt: 2 }}>
-  <Typography variant="h6">
-    <PersonIcon sx={{ marginRight: 1 }} />
-    User Details
-  </Typography>
-  <Box sx={{ mt: 2 }}>
-    {/* Show only Name and Account Type for Admins */}
-    {loggedInUser?.isAdmin ? (
-      <>
-        <Typography variant="body1">Name: {loggedInUser?.firstName} {loggedInUser?.lastName}</Typography>
-        <Typography variant="body1">Account Type: Admin</Typography>
-      </>
-    ) : (
-      <>
-        <Typography variant="body1">Name: {loggedInUser?.firstName} {loggedInUser?.lastName}</Typography>
-        <Typography variant="body1">Student ID: {loggedInUser?.id}</Typography>
-        <Typography variant="body1">Program: {loggedInUser?.program}</Typography>
-        <Typography variant="body1">Department: {loggedInUser?.department}</Typography>
-        <Typography variant="body1">Account Type: Student</Typography>
-        <Typography variant="body1">Enrollment Status: <span style={{ color: getStatusColor(status) }}>{status}</span></Typography>
-      </>
-    )}
-  </Box>
+                            {loggedInUser?.isAdmin && (
+                                <>
+                                    <Typography variant="h6" sx={{ mb: 1, mt: 2 }}>
+                                        Add/Edit Event
+                                    </Typography>
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DateTimePicker
+                                            label="Event Date"
+                                            value={eventDate}
+                                            onChange={setEventDate}
+                                            textField={<TextField />} // Use textField prop instead of renderInput
+                                        />
+                                    </LocalizationProvider>
 
-  {status === "Enrolled" && !loggedInUser?.isAdmin && (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h6">Courses Enrolled:</Typography>
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Code</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Days</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loggedInUser.courses.map((courseCode) => {
-              const course = findCourseByCode(courseCode);
-              return (
-                <TableRow key={course.code}>
-                  <TableCell>{course.code}</TableCell>
-                  <TableCell>{course.name}</TableCell>
-                  <TableCell>{course.days}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
-  )}
+                                    <TextField
+                                        label="Event Name"
+                                        value={eventName}
+                                        onChange={e => setEventName(e.target.value)}
+                                        sx={{ mt: 2, width: "100%" }}
+                                    />
+                                    <Button variant="contained" onClick={editingEvent ? handleSaveEvent : handleAddEvent} sx={{ mt: 1 }}>
+                                        {editingEvent ? "Save Event" : "Add Event"}
+                                    </Button>
+                                </>
+                            )}
+                        </Paper>
+                    </Grid>
+                </Grid>
 
-{loggedInUser?.isAdmin && studentsData.length > 0 && (
-  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, height: '200px' }}>
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '30%' }}>
-      <Typography variant="body1">Enrolled Students</Typography>
-      <Gauge
-        value={enrolledCount}
-        minvalue={0}
-        maxvalue={studentsData.length}
-        label={`Enrolled: ${enrolledCount}`}
-        color="#4CAF50" // Green color for enrolled students
-        sx={{ height: '100%' }} // Ensure Gauge takes full height
-      />
-    </Box>
+                {/*User Details Section*/}
+                <Paper sx={{ padding: 3, mt: 2 }}>
+                    <Typography variant="h6">
+                        <PersonIcon sx={{ marginRight: 1 }} />
+                        User Details
+                    </Typography>
+                    <Box sx={{ mt: 2 }}>
+                        {/* Show only Name and Account Type for Admins */}
+                        {loggedInUser?.isAdmin ? (
+                            <>
+                                <Typography variant="body1">
+                                    Name: {loggedInUser?.firstName} {loggedInUser?.lastName}
+                                </Typography>
+                                <Typography variant="body1">Account Type: Admin</Typography>
+                            </>
+                        ) : (
+                            <>
+                                <Typography variant="body1">
+                                    Name: {loggedInUser?.firstName} {loggedInUser?.lastName}
+                                </Typography>
+                                <Typography variant="body1">Student ID: {loggedInUser?.id}</Typography>
+                                <Typography variant="body1">Program: {loggedInUser?.program}</Typography>
+                                <Typography variant="body1">Department: {loggedInUser?.department}</Typography>
+                                <Typography variant="body1">Account Type: Student</Typography>
+                                <Typography variant="body1">
+                                    Enrollment Status: <span style={{ color: getStatusColor(status) }}>{status}</span>
+                                </Typography>
+                            </>
+                        )}
+                    </Box>
 
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '30%' }}>
-      <Typography variant="body1">Total Students</Typography>
-      <Gauge
-        value={totalStudentsCount}
-        minvalue={0}
-        maxvalue={studentsData.length}
-        label={`Total Students: ${totalStudentsCount}`}
-        color="warning" // Warning color for total students
-        sx={{ height: '100%' }} // Ensure Gauge takes full height
-      />
-    </Box>
+                    {status === "Enrolled" && !loggedInUser?.isAdmin && (
+                        <Box sx={{ mt: 2 }}>
+                            <Typography variant="h6">Courses Enrolled:</Typography>
+                            <TableContainer component={Paper}>
+                                <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Code</TableCell>
+                                            <TableCell>Name</TableCell>
+                                            <TableCell>Days</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {loggedInUser.courses.map(courseCode => {
+                                            const course = findCourseByCode(courseCode);
+                                            return (
+                                                <TableRow key={course.code}>
+                                                    <TableCell>{course.code}</TableCell>
+                                                    <TableCell>{course.name}</TableCell>
+                                                    <TableCell>{course.days}</TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Box>
+                    )}
 
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '30%' }}>
-      <Typography variant="body1">Total Events Registered</Typography>
-      <Gauge
-        value={totalEventsRegistered}
-        minvalue={0}
-        maxvalue={totalEventsRegistered} // Ensure maxvalue is set appropriately
-        label={`Total Events Registered: ${totalEventsRegistered}`}
-        color="info" // Info color for total courses
-        sx={{ height: '100%' }} // Ensure Gauge takes full height
-      />
-    </Box>
-  </Box>
-)}
+                    {loggedInUser?.isAdmin && studentsData.length > 0 && (
+                        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2, height: "200px" }}>
+                            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "30%" }}>
+                                <Typography variant="body1">Enrolled Students</Typography>
+                                <Gauge
+                                    value={enrolledCount}
+                                    minvalue={0}
+                                    maxvalue={studentsData.length}
+                                    label={`Enrolled: ${enrolledCount}`}
+                                    color="#4CAF50" // Green color for enrolled students
+                                    sx={{ height: "100%" }} // Ensure Gauge takes full height
+                                />
+                            </Box>
 
-</Paper>
+                            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "30%" }}>
+                                <Typography variant="body1">Total Students</Typography>
+                                <Gauge
+                                    value={totalStudentsCount}
+                                    minvalue={0}
+                                    maxvalue={studentsData.length}
+                                    label={`Total Students: ${totalStudentsCount}`}
+                                    color="warning" // Warning color for total students
+                                    sx={{ height: "100%" }} // Ensure Gauge takes full height
+                                />
+                            </Box>
 
-
-      </Container>
-    </div>
-  );
+                            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "30%" }}>
+                                <Typography variant="body1">Total Events Registered</Typography>
+                                <Gauge
+                                    value={totalEventsRegistered}
+                                    minvalue={0}
+                                    maxvalue={totalEventsRegistered} // Ensure maxvalue is set appropriately
+                                    label={`Total Events Registered: ${totalEventsRegistered}`}
+                                    color="info" // Info color for total courses
+                                    sx={{ height: "100%" }} // Ensure Gauge takes full height
+                                />
+                            </Box>
+                        </Box>
+                    )}
+                </Paper>
+            </Container>
+        </div>
+    );
 }
 
 export default Dashboard;
