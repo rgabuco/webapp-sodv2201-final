@@ -36,6 +36,21 @@ export const getUserLoggedIn = () => {
     }
 };
 
+export const getUserIdFromToken = () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+        try {
+            const decodedToken = jwtDecode(token);
+            return decodedToken.id;
+        } catch (error) {
+            console.error("Error decoding token:", error);
+            return null;
+        }
+    } else {
+        return null;
+    }
+};
+
 export const isAdministrator = () => {
     const token = localStorage.getItem("token");
     if (token) {
