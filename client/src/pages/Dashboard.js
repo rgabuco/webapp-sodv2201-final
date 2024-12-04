@@ -31,7 +31,7 @@ import dayjs from "dayjs";
 import PersonIcon from "@mui/icons-material/Person";
 import { Gauge } from "@mui/x-charts";
 import axios from "axios";
-import { getUserLoggedIn, getUserIdFromToken, isAdministrator } from "../utils/authUtils"; // Import the getUserLoggedIn function
+import { getUserIdFromToken } from "../utils/authUtils"; // Import the getUserLoggedIn function
 
 function Dashboard() {
     const [loggedInUser, setLoggedInUser] = useState(null);
