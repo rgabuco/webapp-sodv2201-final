@@ -18,14 +18,14 @@ function Login() {
             const { token, data } = response.data;
 
             // Handle successful login logic here
-            console.log("userLoggedIn ", { username });
-            console.log("isAdministrator:", { isAdmin: data.user.isAdmin });
+            // console.log("userLoggedIn ", { username });
+            // console.log("isAdministrator:", { isAdmin: data.user.isAdmin });
 
             // Set localStorage variables
-            localStorage.setItem("userLoggedIn", username);
-            localStorage.setItem("isAdministrator", data.user.isAdmin);
+            // localStorage.setItem("userLoggedIn", username);
+            // localStorage.setItem("isAdministrator", data.user.isAdmin);
             localStorage.setItem("token", token);
-            console.log("LocalStorage variables set successfully");
+            console.log("LocalStorage token set successfully");
 
             // Navigate to the Dashboard page
             navigate("/dashboard");
