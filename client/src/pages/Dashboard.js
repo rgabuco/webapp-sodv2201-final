@@ -84,7 +84,7 @@ function Dashboard() {
                         const students = storedUsers.filter(user => !user.isAdmin);
                         const studentEnrollmentData = students.map(student => ({
                             name: student.firstName + " " + student.lastName,
-                            id: student.id,
+                            id: student._id,
                             program: student.program,
                             department: student.department,
                             coursesCount: student.courses.length,
@@ -120,20 +120,17 @@ function Dashboard() {
         }
     }, [upcomingEvents]);
 
-    const generateCourseSchedule = courseCodes => {
+    const generateCourseSchedule = courses => {
         const schedule = {};
-        courseCodes.forEach(code => {
-            const course = findCourseByCode(code);
-            if (course) {
-                const courseStartDate = new Date(course.startDate);
-                const courseEndDate = new Date(course.endDate);
-                for (let d = courseStartDate; d <= courseEndDate; d.setDate(d.getDate() + 1)) {
-                    const dateString = d.toISOString().split("T")[0];
-                    if (!schedule[dateString]) {
-                        schedule[dateString] = [];
-                    }
-                    schedule[dateString].push(course.name);
+        courses.forEach(course => {
+            const courseStartDate = new Date(course.startDate);
+            const courseEndDate = new Date(course.endDate);
+            for (let d = courseStartDate; d <= courseEndDate; d.setDate(d.getDate() + 1)) {
+                const dateString = d.toISOString().split("T")[0];
+                if (!schedule[dateString]) {
+                    schedule[dateString] = [];
                 }
+                schedule[dateString].push(course.name);
             }
         });
         setCourseSchedule(schedule);
@@ -422,16 +419,13 @@ function Dashboard() {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {loggedInUser.courses.map(courseCode => {
-                                            const course = findCourseByCode(courseCode);
-                                            return (
-                                                <TableRow key={course.code}>
-                                                    <TableCell>{course.code}</TableCell>
-                                                    <TableCell>{course.name}</TableCell>
-                                                    <TableCell>{course.days}</TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
+                                        {loggedInUser.courses.map(course => (
+                                            <TableRow key={course.code}>
+                                                <TableCell>{course.code}</TableCell>
+                                                <TableCell>{course.name}</TableCell>
+                                                <TableCell>{course.days}</TableCell>
+                                            </TableRow>
+                                        ))}
                                     </TableBody>
                                 </Table>
                             </TableContainer>
