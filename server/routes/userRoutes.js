@@ -17,7 +17,7 @@ router
 // Route to get, update, and delete a user by ID
 router
     .route('/:id')
-    .get(authController.isAdmin, userController.getUser) // admin only
+    .get(userController.getUser)
     .patch(userController.updateUser)
     .delete(authController.isAdmin, userController.deleteUser); //admin only
 
