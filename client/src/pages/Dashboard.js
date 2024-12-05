@@ -22,7 +22,6 @@ import { Calendar } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
-import coursesData from "../utils/data/Courses";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -37,7 +36,7 @@ function Dashboard() {
     const [loggedInUser, setLoggedInUser] = useState(null);
     const [status, setStatus] = useState("Not Enrolled");
     const [upcomingEvents, setUpcomingEvents] = useState([]);
-    const [courseSchedule, setCourseSchedule] = useState({});
+    const [, setCourseSchedule] = useState({});
     const [value, setValue] = useState(dayjs());
     const [editingEvent, setEditingEvent] = useState(null);
     const [eventDate, setEventDate] = useState(dayjs());
@@ -136,16 +135,6 @@ function Dashboard() {
         setCourseSchedule(schedule);
     };
 
-    const findCourseByCode = code => {
-        for (const program in coursesData) {
-            const course = coursesData[program].find(course => course.code === code);
-            if (course) {
-                return course;
-            }
-        }
-        return null;
-    };
-
     const handleDateChange = date => {
         setValue(dayjs(date));
     };
@@ -201,33 +190,6 @@ function Dashboard() {
     const enrolledCount = studentsData.filter(student => student.coursesCount > 0).length;
     const totalStudentsCount = studentsData.length; // Total number of students
     const totalEventsRegistered = upcomingEvents.length; // Count of registered events
-
-    const gauge = [
-        {
-            value: enrolledCount,
-            minvalue: 0,
-            maxvalue: totalStudentsCount,
-            label: `Enrolled Students: ${enrolledCount}`,
-            color: "#4CAF50",
-            sx: { width: "30%", height: "100%" }, // Ensure Gauge takes full height
-        },
-        {
-            value: totalStudentsCount, // Use the correct variable name here
-            minvalue: 0,
-            maxvalue: totalStudentsCount,
-            label: `Total Students: ${totalStudentsCount}`, // Update label accordingly
-            color: "warning",
-            sx: { width: "30%", height: "100%" }, // Ensure Gauge takes full height
-        },
-        {
-            value: totalEventsRegistered,
-            minvalue: 0,
-            maxvalue: totalEventsRegistered,
-            label: `Total Events Registered: ${totalEventsRegistered}`, // Update label accordingly
-            color: "info",
-            sx: { width: "30%", height: "100%" }, // Ensure Gauge takes full height
-        },
-    ];
 
     return (
         <div>
