@@ -11,6 +11,8 @@ import {
 import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
 import FilterBar from "../components/filter-bar/FilterBar";
+import axios from "axios";
+import { isAdministrator } from "../utils/authUtils";
 
 function Forms() {
   const [messages, setMessages] = useState([]);
@@ -20,33 +22,75 @@ function Forms() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isReadFilter, setIsReadFilter] = useState(null);
   const [dateFilter, setDateFilter] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    const loggedInUsername = localStorage.getItem("userLoggedIn");
-    const admin = JSON.parse(localStorage.getItem("bvc-users")).find((user) => user.username === loggedInUsername && user.isAdmin);
 
-    if (admin) {
-      setLoggedInAdmin(admin.username);
+   
+   useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        if (!isAdministrator()) {
+          setErrorMessage("Unauthorized access. Admin only.");
+          return;
+        }
 
-      const storedMessages = JSON.parse(localStorage.getItem("bvc-messages")) || [];
-      setMessages(storedMessages);
-    }
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/forms`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setMessages(response.data.data.forms || []);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+        setErrorMessage("Failed to fetch messages. Please try again later.");
+      }
+    };
+
+    fetchMessages();
   }, []);
 
-  const handleDelete = (index) => {
-    const updatedMessages = messages.filter((_, i) => i !== index);
-    setMessages(updatedMessages);
-    localStorage.setItem("bvc-messages", JSON.stringify(updatedMessages));
+  const handleDelete = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/forms/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== id));
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      setErrorMessage("Failed to delete message. Please try again.");
+    }
   };
 
-  const handleOpenMessage = (message) => {
+  const handleOpenMessage = async (message) => {
     setSelectedMessage(message);
     setOpenMessage(true);
 
     if (!message.isRead) {
-      const updatedMessages = messages.map((msg) => (msg.id === message.id ? { ...msg, isRead: true } : msg));
-      setMessages(updatedMessages);
-      localStorage.setItem("bvc-messages", JSON.stringify(updatedMessages));
+      try {
+        const token = localStorage.getItem("token");
+        await axios.patch(
+          `${process.env.REACT_APP_SERVER_URL}/api/v1/forms/${message._id}`,
+          { isRead: true },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) => (msg._id === message._id ? { ...msg, isRead: true } : msg))
+        );
+      } catch (error) {
+        console.error("Error marking message as read:", error);
+        setErrorMessage("Failed to mark message as read. Please try again.");
+      }
     }
   };
 
@@ -67,7 +111,10 @@ function Forms() {
     const dateMatch = dateFilter ? new Date(msg.date).toLocaleDateString().includes(dateFilter) : true;
 
     return (
-      (msg.username.toLowerCase().includes(query) || msg.email.toLowerCase().includes(query) || msg.message.toLowerCase().includes(query) || new Date(msg.date).toLocaleString().includes(query)) &&
+      (msg.username.toLowerCase().includes(query) ||
+        msg.email.toLowerCase().includes(query) ||
+        msg.message.toLowerCase().includes(query) ||
+        new Date(msg.date).toLocaleString().includes(query)) &&
       isReadMatch &&
       dateMatch
     );
