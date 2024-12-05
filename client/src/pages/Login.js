@@ -15,7 +15,7 @@ function Login() {
     const handleLogin = async () => {
         try {
             const response = await axios.post(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/login`, { username, password });
-            const { token, data } = response.data;
+            const { token } = response.data;
 
             // Handle successful login logic here
             // console.log("userLoggedIn ", { username });
