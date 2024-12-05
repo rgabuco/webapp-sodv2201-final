@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableRow, IconButton, Paper, Dialog, DialogTitle, DialogContent, DialogActions, Button, TableHead } from "@mui/material";
 import {
-  Clear as ClearIcon,
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  IconButton,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TableHead,
+} from "@mui/material";
+import {
   MarkEmailUnread as MarkEmailUnreadIcon,
   MarkEmailRead as MarkEmailReadIcon,
   AccountCircle as AccountCircleIcon,
@@ -16,7 +31,6 @@ import { isAdministrator } from "../utils/authUtils";
 
 function Forms() {
   const [messages, setMessages] = useState([]);
-  const [loggedInAdmin, setLoggedInAdmin] = useState("");
   const [openMessage, setOpenMessage] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,9 +38,7 @@ function Forms() {
   const [dateFilter, setDateFilter] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-
-   
-   useEffect(() => {
+  useEffect(() => {
     const fetchMessages = async () => {
       try {
         if (!isAdministrator()) {
@@ -53,20 +65,20 @@ function Forms() {
 
   const handleDelete = async (id) => {
     try {
-        const token = localStorage.getItem("token"); // Retrieve the auth token
-        await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/forms/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+      const token = localStorage.getItem("token"); // Retrieve the auth token
+      await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/forms/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        // Remove the deleted message from the state
-        setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== id));
+      // Remove the deleted message from the state
+      setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== id));
     } catch (error) {
-        console.error("Error deleting message:", error);
-        setErrorMessage("Failed to delete message. Please try again.");
+      console.error("Error deleting message:", error);
+      setErrorMessage("Failed to delete message. Please try again.");
     }
-};
+  };
 
   const handleOpenMessage = async (message) => {
     setSelectedMessage(message);
@@ -139,7 +151,6 @@ function Forms() {
           handleResetFilters={handleResetFilters}
         />
 
-        <Box sx={{ mb: 2 }}></Box>
         <TableContainer
           component={Paper}
           sx={{
@@ -183,9 +194,9 @@ function Forms() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMessages.map((message, index) => (
+                filteredMessages.map((message) => (
                   <TableRow
-                    key={index}
+                    key={message._id}
                     sx={{
                       "&:hover": { backgroundColor: "#f9f9f9" },
                       "@media (max-width: 600px)": {
