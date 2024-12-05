@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { TextField, Button, Box, Typography, Modal, Container, Card } from "@mui/material";
 import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
+import axios from "axios";
+import { checkUserLoggedIn, getUserLoggedIn } from "../utils/authUtils";
+
 
 function ContactSupport() {
   const [formData, setFormData] = useState({
@@ -10,63 +13,52 @@ function ContactSupport() {
     message: "",
   });
   const [openModal, setOpenModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); 
+
 
   useEffect(() => {
-    // Get logged in user's name from localStorage
-    const username = localStorage.getItem("userLoggedIn");
-    // Get users data from localStorage
-    const users = JSON.parse(localStorage.getItem("bvc-users")) || [];
-    // Find the logged-in user from the users array
-    const user = users.find((user) => user.username === username);
-
-    if (username && user) {
-      setFormData({
-        username,
-        email: user.email, // Automatically set the logged-in user's email
-        message: "",
-      });
-    }
-  }, []);
+   
+  // Get logged-in user's details using authUtils
+  const username = getUserLoggedIn();
+  if (username) {
+    setFormData((prev) => ({
+      ...prev,
+      username: username,
+      email: `${username}@example.com`, 
+    }));
+  }
+}, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const findNextAvailableId = (messages) => {
-    const ids = messages.map((message) => message.id);
-    let nextId = 1;
-    while (ids.includes(nextId)) {
-      nextId++;
-    }
-    return nextId;
-  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Get existing messages
-    const storedMessages = JSON.parse(localStorage.getItem("bvc-messages")) || [];
-
-    // Prepare the message with the next available ID
-    const newMessage = {
-      id: findNextAvailableId(storedMessages),
-      ...formData,
-      date: new Date().toISOString(),
-      isRead: false,
-    };
-
-    // Save the message in bvc-messages
-    storedMessages.push(newMessage);
-    localStorage.setItem("bvc-messages", JSON.stringify(storedMessages));
-
-    console.log("Message Saved:", newMessage);
-
-    // Clear the form after submission
-    setFormData((prev) => ({ ...prev, message: "" }));
-
-    // Open the modal
-    setOpenModal(true);
+  
+    try {
+      
+      const response = await axios.post(`${process.env.REACT_APP_SERVER_URL}/api/v1/forms`, {
+        username: formData.username,
+        email: formData.email,
+        message: formData.message,
+      });
+  
+      console.log("Message Sent:", response.data);
+  
+      // Clear the message after submission
+      setFormData((prev) => ({ ...prev, message: "" }));
+  
+      // Open the modal
+      setOpenModal(true);
+      setErrorMessage(""); // Clear any error messages
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setErrorMessage("Failed to send message. Please try again.");
+    }
   };
+  
 
   const handleCloseModal = () => {
     setOpenModal(false);
