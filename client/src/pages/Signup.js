@@ -229,6 +229,12 @@ function Signup() {
                                                     <MenuItem value="+44">+44 (UK)</MenuItem>
                                                     <MenuItem value="+61">+61 (Australia)</MenuItem>
                                                     <MenuItem value="+91">+91 (India)</MenuItem>
+                                                    <MenuItem value="+81">+81 (Japan)</MenuItem>
+                                                    <MenuItem value="+49">+49 (Germany)</MenuItem>
+                                                    <MenuItem value="+33">+33 (France)</MenuItem>
+                                                    <MenuItem value="+86">+86 (China)</MenuItem>
+                                                    <MenuItem value="+7">+7 (Russia)</MenuItem>
+                                                    <MenuItem value="+55">+55 (Brazil)</MenuItem>
                                                 </Select>
                                             </FormControl>
                                         )}
