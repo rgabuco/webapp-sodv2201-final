@@ -22,6 +22,7 @@ import {
   AccountCircle as AccountCircleIcon,
   CalendarToday as CalendarTodayIcon,
   Delete as DeleteIcon,
+  Splitscreen,
 } from "@mui/icons-material";
 import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
@@ -123,6 +124,10 @@ function Forms() {
     const isReadMatch = isReadFilter === null ? true : msg.isRead === isReadFilter;
     const dateMatch = dateFilter ? new Date(msg.date).toLocaleDateString().includes(dateFilter) : true;
 
+    console.log("dateMatch", dateMatch);
+    console.log("dateFilter", dateFilter);
+    console.log("new Date(msg.date).toLocaleDateString()", new Date(msg.date).toLocaleDateString());
+
     return (
       (msg.username.toLowerCase().includes(query) ||
         msg.email.toLowerCase().includes(query) ||
@@ -131,7 +136,25 @@ function Forms() {
       isReadMatch &&
       dateMatch
     );
-  });
+});
+
+  /** 
+  const filteredMessages = messages.filter((msg) => {
+    const query = searchQuery.toLowerCase();
+    const isReadMatch = isReadFilter === null ? true : msg.isRead === isReadFilter;
+    const dateMatch = dateFilter ? new Date(msg.date).toISOString().split("T")[0].includes(dateFilter) : true;
+    console.log("dateMatch",dateMatch);
+console.log("dateFilter",dateFilter);
+console.log('new Date(msg.Date).toISOString().split("T")[0]',new Date(msg.Date).toISOString().split("T")[0]);
+    return (
+      (msg.username.toLowerCase().includes(query) ||
+        msg.email.toLowerCase().includes(query) ||
+        msg.message.toLowerCase().includes(query) ||
+        new Date(msg.date).toLocaleString().includes(query)) &&
+      isReadMatch &&
+      dateMatch
+    );
+  });*/
 
   return (
     <div>
