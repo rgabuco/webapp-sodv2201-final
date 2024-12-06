@@ -8,11 +8,11 @@ import ColumnPopover from "../components/column-popover/ColumnPopover";
 import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
 import FirstPage from "@mui/icons-material/FirstPage";
-import usersArray from "../utils/data/Users.js"
+import axios from "axios";
 
 function StudentList() {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [users, setUsers] = useState(usersArray);
+  const [users, setUsers] = useState([]);
   const [anchorElFilter, setAnchorElFilter] = useState(null);
   const [anchorElSearch, setAnchorElSearch] = useState(null);
   const [anchorElColumns, setAnchorElColumns] = useState(null);
@@ -38,20 +38,43 @@ function StudentList() {
   const itemsPerPage = 6; // Number of items per page
 
   useEffect(() => {
-    try {
-      const storedUsers = JSON.parse(localStorage.getItem("bvc-users")) || [];
-      const currentUser = storedUsers.find((user) => user.username === localStorage.getItem("currentUser"));
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem("token"); 
+        const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the request header
+          },
+        });
 
-      if (currentUser?.isAdmin) {
-        setIsAdmin(true);
+        // Filter out users with isAdmin: true
+        const validUsers = response.data.data.users.filter(user => !user.isAdmin);
+
+        setUsers(validUsers); // Update the state with the filtered users
+      } catch (error) {
+        console.error("Error fetching users:", error);
       }
+    };
 
-      const filteredUsers = storedUsers.filter((user) => !user.isAdmin);
-      setUsers(filteredUsers);
-    } catch (error) {
-      console.error("Error retrieving users from local storage:", error);
-    }
+    fetchUsers();
   }, []);
+
+  const handleDelete = async (_id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token in the request header
+        },
+      });
+
+      // If the user is successfully deleted from the database, update local state
+      const updatedUsers = users.filter((user) => user._id !== _id);
+      setUsers(updatedUsers);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
 
   // Filter users based on search and filter criteria
   const filteredUsers = users.filter((student) => {
@@ -125,12 +148,6 @@ function StudentList() {
     setCurrentPage(0); // Reset to the first page
   };
 
-  const handleDelete = (studentId) => {
-    const updatedUsers = users.filter((student) => student.id !== studentId);
-    setUsers(updatedUsers);
-    localStorage.setItem("bvc-users", JSON.stringify(updatedUsers));
-  };
-
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) {
       setCurrentPage((prev) => prev + 1);
@@ -170,7 +187,11 @@ function StudentList() {
               handleFilterChange={handleFilterChange}
             />
 
-            <StudentTable filteredUsers={paginatedUsers} columnVisibility={columnVisibility} handleDelete={handleDelete} />
+            <StudentTable
+              filteredUsers={paginatedUsers}
+              columnVisibility={columnVisibility}
+              handleDelete={handleDelete} // Pass handleDelete here
+            />
 
             <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
               <IconButton onClick={handleFirstPage} disabled={currentPage === 0}>

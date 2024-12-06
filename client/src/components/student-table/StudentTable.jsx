@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete'; 
+
 const StudentTable = ({ filteredUsers, columnVisibility, handleDelete }) => {
   const [selectedRow, setSelectedRow] = useState(null); 
   const [openDialog, setOpenDialog] = useState(false); 
   const [deleteId, setDeleteId] = useState(null); 
   const tableRef = useRef(); 
+
   const handleClickOpen = (id) => {
     setDeleteId(id); 
     setOpenDialog(true); 
@@ -65,7 +67,7 @@ const StudentTable = ({ filteredUsers, columnVisibility, handleDelete }) => {
             {filteredUsers.length > 0 ? (
               filteredUsers.map((student, index) => (
                 <TableRow 
-                  key={index}
+                  key={student._id} 
                   onClick={() => handleRowClick(index)} 
                   sx={{ cursor: 'pointer' }} 
                 >
@@ -79,8 +81,8 @@ const StudentTable = ({ filteredUsers, columnVisibility, handleDelete }) => {
                     {selectedRow === index && (
                       <DeleteIcon 
                         onClick={(e) => {
-                          e.stopPropagation(); 
-                          handleClickOpen(student.id); 
+                          e.stopPropagation(); // Prevent triggering row click
+                          handleClickOpen(student._id); // Ensure the ID matches
                         }} 
                         sx={{ cursor: 'pointer', color: 'red' }} 
                       />
