@@ -2,66 +2,90 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
 import { Container, Typography, Box, Grid, Card, CardContent, Button, ListItemText } from "@mui/material";
+import axios from "axios";
+import { jwtDecode } from 'jwt-decode';
 
 function MyCourses() {
   const [myCourses, setMyCourses] = useState([]);
   const [totalCredits, setTotalCredits] = useState(0);
-  const [coursesData, setCoursesData] = useState(JSON.parse(localStorage.getItem("bvc-courses")) || {});
-  const loggedInUsername = localStorage.getItem("userLoggedIn");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const usersData = JSON.parse(localStorage.getItem("bvc-users")) || [];
-    const loggedInUser = usersData.find((user) => user.username === loggedInUsername);
+    const fetchCourses = async () => {
+      try {
+        const token = localStorage.getItem("token"); 
+        if (!token) {
+          setErrorMessage("No token found.");
+          return;
+        }
 
-    if (loggedInUser) {
-      const userCourses = loggedInUser.courses
-        .map((courseCode) => {
-          for (const program in coursesData) {
-            const course = coursesData[program].find((course) => course.code === courseCode);
-            if (course) return course;
-          }
-          return null;
-        })
-        .filter((course) => course !== null);
+        const decodedToken = jwtDecode(token);  
+        const userId = decodedToken.id; 
 
-      setMyCourses(userCourses);
-      calculateTotalCredits(userCourses);
-    }
-  }, [loggedInUsername, coursesData]);
+        console.log("Decoded User ID:", userId);
 
-  useEffect(() => {
-    calculateTotalCredits(myCourses);
-  }, [myCourses]);
+        // get courses using token and userId
+        const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}/courses`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  const calculateTotalCredits = (courses) => {
-    const total = courses.reduce((sum, course) => sum + course.credits, 0);
-    setTotalCredits(total);
-  };
+        const courses = response.data.data.courses || [];
+        setMyCourses(courses);
 
-  const handleRemoveCourse = (courseToRemove) => {
-    const updatedCourses = myCourses.filter((course) => course.code !== courseToRemove.code);
-    setMyCourses(updatedCourses);
-
-    const usersData = JSON.parse(localStorage.getItem("bvc-users")) || [];
-    const loggedInUserIndex = usersData.findIndex((user) => user.username === loggedInUsername);
-    if (loggedInUserIndex !== -1) {
-      usersData[loggedInUserIndex].courses = updatedCourses.map((course) => course.code);
-      localStorage.setItem("bvc-users", JSON.stringify(usersData));
-    }
-
-    // Update seatsAvailable in bvc-courses
-    const updatedCoursesData = { ...coursesData };
-    for (const program in updatedCoursesData) {
-      const courseIndex = updatedCoursesData[program].findIndex((c) => c.code === courseToRemove.code);
-      if (courseIndex !== -1) {
-        updatedCoursesData[program][courseIndex].seatsAvailable += 1;
-        break;
+        // Compute total credits
+        const total = courses.reduce((sum, course) => sum + course.credits, 0);
+        setTotalCredits(total);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+        setErrorMessage("Failed to fetch courses. Please try again later.");
       }
-    }
-    setCoursesData(updatedCoursesData);
-    localStorage.setItem("bvc-courses", JSON.stringify(updatedCoursesData));
-  };
+    };
 
+    fetchCourses();
+  }, []);
+
+  const handleRemoveCourse = async (courseCode) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setErrorMessage("No token found.");
+        return;
+      }
+  
+      const decodedToken = jwtDecode(token);  
+      const userId = decodedToken.id; 
+  
+      console.log("Course Code:", courseCode);
+  
+      const response = await axios.delete(
+        `${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}/courses?courseCode=${courseCode}`,  
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, 
+          },
+        }
+      );
+  
+      // Check if the response is successful
+      if (response.status === 200) {
+        // Refresh the course list
+        setMyCourses((prevCourses) => prevCourses.filter((course) => course.code !== courseCode));
+        // Recompute total credits
+        setTotalCredits((prevTotal) =>
+          prevTotal - myCourses.find((course) => course.code === courseCode)?.credits || 0
+        );
+      }
+  
+    } catch (error) {
+      console.error("Error removing course:", error);
+      setErrorMessage("Failed to remove course. Please try again.");
+    }
+  };
+  
+  
+  
   return (
     <Container>
       <Navbar rightMenu={<ProfileMenu />} />
@@ -160,7 +184,7 @@ function MyCourses() {
                       }
                     />
                     <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mr: 1 }}>
-                      <Button variant="contained" color="primary" onClick={() => handleRemoveCourse(course)}>
+                      <Button variant="contained" color="primary" onClick={() => handleRemoveCourse(course.code)}>
                         Remove
                       </Button>
                     </Box>
