@@ -4,6 +4,7 @@ import ProfileMenu from "../components/profile-menu/ProfileMenu";
 import { Container, Typography, Box, Grid, Card, CardContent, Button, ListItemText } from "@mui/material";
 import axios from "axios";
 import { jwtDecode } from 'jwt-decode';
+import { checkUserLoggedIn, getUserLoggedIn } from "../utils/authUtils"; // Import utility functions
 
 function MyCourses() {
   const [myCourses, setMyCourses] = useState([]);
@@ -13,12 +14,18 @@ function MyCourses() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const token = localStorage.getItem("token"); 
-        if (!token) {
-          setErrorMessage("No token found.");
+        if (!checkUserLoggedIn()) {
+          setErrorMessage("Unauthorized access. Please log in.");
           return;
         }
 
+        const username = getUserLoggedIn(); 
+        if (!username) {
+          setErrorMessage("No username found.");
+          return;
+        }
+
+        const token = localStorage.getItem("token"); 
         const decodedToken = jwtDecode(token);  
         const userId = decodedToken.id; 
 
@@ -27,8 +34,8 @@ function MyCourses() {
         // get courses using token and userId
         const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}/courses`, {
           headers: {
-            Authorization: `Bearer ${token}`,
-          },
+            Authorization: `Bearer ${token}`  
+          }
         });
 
         const courses = response.data.data.courses || [];
@@ -53,12 +60,12 @@ function MyCourses() {
         setErrorMessage("No token found.");
         return;
       }
-  
+
       const decodedToken = jwtDecode(token);  
-      const userId = decodedToken.id; 
-  
+      const userId = decodedToken.id;
+
       console.log("Course Code:", courseCode);
-  
+
       const response = await axios.delete(
         `${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}/courses?courseCode=${courseCode}`,  
         {
@@ -67,23 +74,20 @@ function MyCourses() {
           },
         }
       );
-  
-      // Check if the response is successful
+
       if (response.status === 200) {
         // Refresh the course list
         setMyCourses((prevCourses) => prevCourses.filter((course) => course.code !== courseCode));
-        // Recompute total credits
         setTotalCredits((prevTotal) =>
           prevTotal - myCourses.find((course) => course.code === courseCode)?.credits || 0
         );
       }
-  
+
     } catch (error) {
       console.error("Error removing course:", error);
       setErrorMessage("Failed to remove course. Please try again.");
     }
   };
-  
   
   
   return (
