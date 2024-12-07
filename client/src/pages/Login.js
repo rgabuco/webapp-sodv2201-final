@@ -12,6 +12,8 @@ function Login() {
     const [passwordError, setPasswordError] = useState("");
     const navigate = useNavigate();
 
+    localStorage.removeItem("token"); // Clear token from localStorage
+
     const handleLogin = async () => {
         try {
             const response = await axios.post(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/login`, { username, password });
