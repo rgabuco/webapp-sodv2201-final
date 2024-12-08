@@ -88,6 +88,10 @@ function MyCourses() {
       setErrorMessage("Failed to remove course. Please try again.");
     }
   };
+  const formatDate = (date) => {
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return new Date(date).toLocaleDateString('en-CA', options);  // 'en-CA' format: YYYY-MM-DD
+  };
   
   
   return (
@@ -151,7 +155,9 @@ function MyCourses() {
                             </Grid>
                             <Grid item xs={8}>
                               <Typography variant="body1">
-                                {course.startDate} - {course.endDate}
+                                
+                                {formatDate(course.startDate)} - {formatDate(course.endDate)}
+
                               </Typography>
                             </Grid>
 
