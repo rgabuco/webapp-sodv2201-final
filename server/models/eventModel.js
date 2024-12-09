@@ -11,8 +11,7 @@ const eventSchema = new mongoose.Schema({
         required: true, // eventDate is required
     },
     username: {
-        type: mongoose.Schema.Types.ObjectId, // Reference to the User model
-        ref: 'User',
+        type: String,
         required: true, // createdBy is required
     },
 }, {

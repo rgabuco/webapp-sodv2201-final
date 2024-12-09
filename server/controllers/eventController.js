@@ -1,61 +1,84 @@
 const Event = require('../models/eventModel'); // Import the Event model
-const dayjs = require('dayjs'); // Import dayjs for date validation
+const catchAsync = require('../utils/catchAsync'); // Import the catchAsync utility
+const AppError = require('../utils/appError'); // Import the AppError class
 
-exports.createEvent = async (req, res) => {
-    try {
-        console.log("Request body:", req.body); // Log the request body for debugging
-        const { eventName, eventDate } = req.body;
-
-        // Validate required fields
-        if (!eventName || !eventDate) {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'Please provide eventName and eventDate.',
-            });
+// Get all events
+exports.getAllEvents = catchAsync(async (req, res, next) => {
+    
+    const events = await Event.find();
+    
+    res.json({
+        status: 'success',
+        results: events.length,
+        data: {
+            events
         }
+    });
+});
 
-        // Validate eventDate format (ISO 8601)
-        const parsedDate = new Date(eventDate);
-        if (isNaN(parsedDate.getTime())) {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'Invalid date format. Please use ISO 8601 format.',
-            });
+// Get an event by ID
+exports.getEvent = catchAsync(async (req, res, next) => {
+
+    const { id } = req.params;
+    const event = await Event.findById(id);
+    if (!event) {
+        console.log(`Event with ID ${id} not found`);
+        return next(new AppError('Event not found', 404));
+    }
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            event
         }
+    });
+});
 
-        // Create the event
-        const newEvent = await Event.create({
-            eventName,
-            eventDate: parsedDate,
-            createdBy: req.user._id, // Use the authenticated user's ID
-        });
+// Create a new event
+exports.createEvent = catchAsync(async (req, res, next) => {
+    
+    const newEvent = await Event.create(req.body);
 
-        // Respond with success
-        res.status(201).json({
-            status: 'success',
-            data: { event: newEvent },
-        });
-    } catch (err) {
-        console.error('Error creating event:', err); // Log error for debugging
-        res.status(500).json({
-            status: 'fail',
-            message: 'An error occurred while creating the event.',
-        });
+    res.status(201).json({
+        status: 'success',
+        data: newEvent
+    });
+});
+
+// Update event by ID
+exports.updateEvent = catchAsync(async (req, res, next) => {
+    
+    const event = await Event.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true
+    });
+
+    if (!event) {
+        return next(new AppError('Event not found with that ID', 404));
     }
-};
 
-exports.getAllEvents = async (req, res) => {
-    try {
-        const events = await Event.find().populate('createdBy', 'firstName lastName'); // Populate createdBy with user info
-        res.status(200).json({
-            status: 'success',
-            data: { events },
-        });
-    } catch (err) {
-        console.error('Error fetching events:', err); // Log error for debugging
-        res.status(500).json({
-            status: 'fail',
-            message: 'An error occurred while fetching events.',
-        });
+    res.status(200).json({
+        status: 'success',
+        data: event
+    });
+
+});
+
+// Delete an event
+exports.deleteEvent = catchAsync(async (req, res, next) => {
+    
+    const event = await Event.findByIdAndDelete(req.params.id);
+    
+    if (!event) {
+        return next(new AppError('Event not found with that ID', 404));
     }
-};
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Successfully deleted event by ID',
+        data: {
+            event
+        }
+    });
+
+});
