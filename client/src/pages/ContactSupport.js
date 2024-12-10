@@ -18,10 +18,24 @@ function ContactSupport() {
 
 
 
-
 useEffect(() => {
   const fetchUserData = async () => {
     try {
+      
+      const isLoggedIn = checkUserLoggedIn();
+      if (!isLoggedIn) {
+        console.error("User is not logged in. Redirecting to login.");
+        window.location.href = "/login"; 
+        return;
+      }
+
+      
+      const username = getUserLoggedIn(); 
+      if (!username) {
+        console.error("Username not found in authUtils.");
+        return;
+      }
+
       const token = localStorage.getItem("token"); 
       if (!token) {
         console.error("No token found. Redirecting to login.");
@@ -57,6 +71,7 @@ useEffect(() => {
 
   fetchUserData();
 }, []);
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
