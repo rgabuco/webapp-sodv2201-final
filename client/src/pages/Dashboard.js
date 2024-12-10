@@ -13,6 +13,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import { Gauge } from "@mui/x-charts";
 import axios from "axios";
 import { getUserIdFromToken } from "../utils/authUtils"; // Import the getUserLoggedIn function
+import { jwtDecode } from 'jwt-decode';
 
 function Dashboard() {
     const [loggedInUser, setLoggedInUser] = useState(null);
@@ -160,69 +161,167 @@ function Dashboard() {
     };
 
     const handleEditEvent = (event) => {
+        console.log("Editing event:", event); // Log the event to verify
         setEditingEvent(event);
-        setEventDate(dayjs(event.date));
-        setEventName(event.event);
+        setEventDate(dayjs(event.eventDate));
+        setEventName(event.eventName);
     };
+    
 
     const handleSaveEvent = async () => {
-        if (editingEvent) {
-            try {
-                const response = await axios.patch(`${process.env.REACT_APP_SERVER_URL}/api/v1/events/${editingEvent._id}`, { name: eventName, datetime: eventDate.toISOString() });
-                setUpcomingEvents((prevEvents) => prevEvents.map((event) => (event._id === editingEvent._id ? response.data.event : event)));
-            } catch (error) {
-                console.error("Error editing event:", error);
-            }
-        }
-    };
-
-    const handleDeleteEvent = async (eventId) => {
         try {
-            await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/events/${eventId}`);
-            setUpcomingEvents((prevEvents) => prevEvents.filter((event) => event._id !== eventId));
-        } catch (error) {
-            console.error("Error deleting event:", error);
-        }
-    };
-
-    // Function to handle adding the event
-    const handleAddEvent = async () => {
-        try {
-            const token = localStorage.getItem("token"); // Get the token from localStorage
-
+            const token = localStorage.getItem("token");
+    
             if (!token) {
                 console.error("No token found. Please log in.");
                 return;
             }
+    
+            const headers = {
+                Authorization: `Bearer ${token}`,
+            };
+    
+            const updatedEvent = {
+                eventName: eventName,
+                eventDate: eventDate.toISOString(),  // Make sure to format the date correctly
+                username: loggedInUser.username,  // Assuming this is available in your state
+            };
+    
+            // Debugging: Log the URL and headers
+            const url = `${process.env.REACT_APP_SERVER_URL}/api/v1/events/${editingEvent._id}`;
+            console.log("PATCH Request URL:", url);
+            console.log("Editing event ID:", editingEvent._id);
+    
+            // Send the PATCH request with Authorization header
+            const response = await axios.patch(url, updatedEvent, { headers });
+    
+            if (response.status === 200) {
+                console.log("Event updated successfully:", response.data);
+    
+                // Update the state with the updated event
+                setUpcomingEvents((prevEvents) => {
+                    const updatedEvents = prevEvents.map((event) =>
+                        event._id === editingEvent._id ? response.data.data : event
+                    );
+                    return updatedEvents;
+                });
+    
+                // Optionally reset the form
+                setEditingEvent(null);
+                setEventName("");
+                setEventDate(null);
+            } else {
+                console.error("Unexpected response when updating event:", response);
+            }
+        } catch (error) {
+            console.error("Error updating event:", error.response?.data?.message || error.message);
+            alert("There was an issue updating the event. Please try again.");
+        }
+    };
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
-            // Format eventDate using dayjs
-            const formattedEventDate = eventDate.format("YYYY-MM-DDTHH:mm:ssZ");
+    const handleDeleteEvent = async (eventId) => {
+        try {
+            const token = localStorage.getItem("token");  // Ensure token is retrieved from localStorage
+        
+            if (!token) {
+                console.error("No token found. Please log in.");
+                return;
+            }
+        
+            const headers = {
+                Authorization: `Bearer ${token}`,
+            };
+    
+            // Send the DELETE request with Authorization header
+            const response = await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/events/${eventId}`, { headers });
+    
+            if (response.status === 200) {
+                console.log("Event deleted successfully");
+    
+                // Update the state to remove the deleted event
+                setUpcomingEvents((prevEvents) => prevEvents.filter((event) => event._id !== eventId));
+            } else {
+                console.error("Unexpected response when deleting event:", response);
+            }
+        } catch (error) {
+            console.error("Error deleting event:", error.response?.data?.message || error.message);
+            alert("There was an issue deleting the event. Please try again.");
+        }
+    };
+    
+    
+    
 
-            // Send a POST request to add the event
+    const handleAddEvent = async () => {
+        try {
+            const token = localStorage.getItem("token");
+    
+            if (!token) {
+                console.error("No token found. Please log in.");
+                return;
+            }
+    
+            const user = jwtDecode(token);
+            const username = user.username;
+    
             const response = await axios.post(
-                `${process.env.REACT_APP_SERVER_URL}/api/v1/events`, // The server API endpoint
+                `${process.env.REACT_APP_SERVER_URL}/api/v1/events`,
                 {
-                    name: eventName, // Event name
-                    date: formattedEventDate, // Use the formatted date
+                    eventName: eventName,
+                    eventDate: eventDate.toISOString(),
+                    username: username,
                 },
                 {
                     headers: {
-                        Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );
-
-            console.log("Event added successfully:", response.data);
-            setUpcomingEvents((prevEvents) => [...prevEvents, response.data.event]); // Update state
+    
+            console.log("API Response:", response.data);
+    
+            // Extract the event from the API response
+            const newEvent = response.data.data; // Corrected to access `data` property
+            if (!newEvent) {
+                console.error("Undefined event:", newEvent);
+                return;
+            }
+    
+            // Update the state with the new event
+            setUpcomingEvents((prevEvents) => {
+                const updatedEvents = [...prevEvents, newEvent];
+                console.log("Updated upcoming events:", updatedEvents);
+                return updatedEvents;
+            });
+    
+            // Optionally reset form fields
+            setEventName("");
+            setEventDate(null);
         } catch (error) {
             console.error("Error adding event:", error.response?.data?.message || error.message);
         }
     };
-
+    
     const getEventsForDate = (date) => {
         const dateString = date.format("YYYY-MM-DD");
-        return upcomingEvents.filter((event) => event.date === dateString);
+        return upcomingEvents
+            .filter((event) => event && event.eventDate) // Filter out undefined or malformed events
+            .filter((event) => {
+                const eventDate = dayjs(event.eventDate).format("YYYY-MM-DD"); // Format the event date
+                return eventDate === dateString;
+            });
     };
+    
+    
 
     const selectedEvents = getEventsForDate(value);
 
@@ -253,131 +352,179 @@ function Dashboard() {
                 </Typography>
                 {/* Centered Calendar and Upcoming Events Section */}
                 <Grid container spacing={2} justifyContent="center" sx={{ mb: 0.5 }}>
-                    {/* Calendar Section */}
-                    <Grid item xs={12} sm={6}>
-                        <Paper
-                            elevation={3}
-                            sx={{
-                                padding: 0.5,
-                                maxWidth: 650,
-                                width: "100%",
-                                height: "400px", // Set a fixed height for the entire section
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "space-between", // Distribute space between the title, calendar, and events list
-                                alignItems: "center",
-                            }}
-                        >
-                            {/* Title */}
-                            <Typography variant="h6" sx={{ mb: 1, fontSize: "0.8rem", textAlign: "center" }}>
-                                Course Schedule
-                            </Typography>
+  {/* Calendar Section */}
+  <Grid item xs={12} sm={6}>
+    <Paper
+      elevation={3}
+      sx={{
+        padding: 0.5,
+        maxWidth: 650,
+        width: "100%",
+        height: "400px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Typography variant="h6" sx={{ mb: 1, fontSize: "1rem", textAlign: "center" }}>
+        Calendar
+      </Typography>
+      
+{/* Calendar Section */}
+<Box
+    sx={{
+        width: "100%",
+        flexGrow: 1,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        // Adjust maxHeight to allow full calendar to display without clipping
+        height: "300px",  // You can set this value based on the space you need for the calendar
+        overflow: "visible",  // Ensure no clipping of the calendar
+    }}
+>
+    <Calendar
+        onChange={handleDateChange}
+        value={value.toDate()}
+        sx={{
+            width: "100%",
+            height: "100%", // Ensure the calendar takes full height within the Box
+        }}
+    />
+</Box>
 
-                            {/* Calendar Section */}
-                            <Box
-                                sx={{
-                                    width: "100%",
-                                    flexGrow: 1, // Allow the calendar to grow and fill available space
-                                    display: "flex",
-                                    justifyContent: "center", // Center horizontally
-                                    alignItems: "center", // Center vertically
-                                }}
-                            >
-                                <Calendar onChange={handleDateChange} value={value.toDate()} sx={{ width: "100%", height: "auto" }} />
-                            </Box>
 
-                            {/* Events List */}
-                            <Typography variant="subtitle1" sx={{ mt: 1, fontSize: "0.75rem", textAlign: "center" }}>
-                                Events on {value.format("YYYY D, MMMM")}:
-                            </Typography>
-                            <Box
-                                sx={{
-                                    maxHeight: "150px",
-                                    overflowY: "auto",
-                                    width: "100%",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    alignItems: "center",
-                                }}
-                            >
-                                {selectedEvents.length > 0 ? (
-                                    <List dense>
-                                        {selectedEvents.map((event, index) => (
-                                            <ListItem key={index} sx={{ padding: 0 }}>
-                                                <Typography variant="body2" sx={{ fontSize: "1rem", textAlign: "center" }}>
-                                                    {event.event} at {event.time}
-                                                </Typography>
-                                            </ListItem>
-                                        ))}
-                                    </List>
-                                ) : (
-                                    <Typography variant="body2" sx={{ fontSize: "0.7rem", textAlign: "center" }}>
-                                        No events
-                                    </Typography>
-                                )}
-                            </Box>
-                        </Paper>
-                    </Grid>
 
-                    {/* Upcoming Events Section */}
-                    <Grid item xs={12} sm={6}>
-                        <Paper
-                            elevation={3}
-                            sx={{
-                                padding: 0.5,
-                                maxWidth: 650,
-                                width: "100%",
-                                height: "400px",
-                                display: "flex",
-                                flexDirection: "column",
-                            }}
-                        >
-                            <Typography variant="h6" sx={{ mb: 1, fontSize: "0.8rem", textAlign: "center" }}>
-                                Upcoming Events
-                            </Typography>
 
-                            {upcomingEvents.length > 0 ? (
-                                upcomingEvents.map((event) => (
-                                    <Grid item key={event._id}>
-                                        <Chip
-                                            label={`${event.date}: ${event.name}`}
-                                            variant="outlined"
-                                            color="primary"
-                                            sx={{ fontSize: "0.7rem", borderRadius: "16px" }}
-                                            deleteIcon={
-                                                loggedInUser?.isAdmin ? (
-                                                    <IconButton size="small" onClick={() => handleDeleteEvent(event._id)}>
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                ) : null
-                                            }
-                                            onDelete={loggedInUser?.isAdmin ? () => handleDeleteEvent(event._id) : () => {}}
-                                            onClick={() => loggedInUser?.isAdmin && handleEditEvent(event)}
-                                        />
-                                    </Grid>
-                                ))
-                            ) : (
-                                <Typography variant="body2" sx={{ fontSize: "1rem", textAlign: "center" }}>
-                                    No upcoming events.
-                                </Typography>
-                            )}
+{/* Events List */}
+<Typography variant="subtitle1" sx={{ mt: 1, fontSize: "0.75rem", textAlign: "center" }}>
+    Events on {value.format("YYYY D, MMMM")}:
+</Typography>
 
-                            {loggedInUser?.isAdmin && (
-                                <>
-                                    <Typography variant="h6" sx={{ mb: 1, mt: 2 }}>
-                                        Add/Edit Event
-                                    </Typography>
-                                    <DateTimePicker label="Event Date" value={eventDate} onChange={setEventDate} textField={<TextField fullWidth />} />
+<Box
+    sx={{
+        maxHeight: "100px", // Adjust this height if necessary
+        overflowY: "auto",  // Allow vertical scrolling if content overflows
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+    }}
+>
+    {selectedEvents.length > 0 ? (
+        <List dense>
+            {/* Sort the events in ascending order by eventDate */}
+            {selectedEvents
+                .sort((a, b) => dayjs(a.eventDate).isBefore(dayjs(b.eventDate)) ? -1 : 1)  // Sort by eventDate
+                .map((event, index) => (
+                    <ListItem key={index} sx={{ padding: 0 }}>
+                        <Typography variant="body2" sx={{ fontSize: ".75rem", textAlign: "center" }}>
+                            {event.eventName}: {dayjs(event.eventDate).format("HH:mm")} {/* Show only time */}
+                        </Typography>
+                    </ListItem>
+                ))}
+        </List>
+    ) : (
+        <Typography variant="body2" sx={{ fontSize: "0.7rem", textAlign: "center" }}>
+            No events
+        </Typography>
+    )}
+</Box>
 
-                                    <TextField label="Event Name" value={eventName} onChange={(e) => setEventName(e.target.value)} sx={{ mt: 2, width: "100%" }} />
-                                    <Button variant="contained" onClick={editingEvent ? handleSaveEvent : handleAddEvent} sx={{ mt: 1 }}>
-                                        {editingEvent ? "Save Event" : "Add Event"}
-                                    </Button>
-                                </>
-                            )}
-                        </Paper>
-                    </Grid>
+
+
+
+    </Paper>
+  </Grid>
+
+ {/* Upcoming Events Section */}
+<Grid item xs={12} sm={6}>
+    <Paper
+        elevation={3}
+        sx={{
+            padding: 0.5,
+            maxWidth: 650,
+            width: "100%",
+            height: "400px",
+            display: "flex",
+            flexDirection: "column",
+        }}
+    >
+        <Typography variant="h6" sx={{ mb: 1, fontSize: "0.8rem", textAlign: "center" }}>
+            Upcoming Events
+        </Typography>
+
+        {/* Scrollable container for events */}
+        <Box
+            sx={{
+                flexGrow: 1,
+                overflowY: "auto", // Enable vertical scrolling
+                maxHeight: "250px", // Set a max height for the events list
+                width: "100%", // Ensure Box takes full width
+            }}
+        >
+            {upcomingEvents.length > 0 ? (
+                <Grid container spacing={1} sx={{ flexWrap: 'wrap' }}>
+                    {upcomingEvents.map((event) => {
+                        if (!event) {
+                            console.error("Undefined event:", event); // Log undefined events
+                            return null; // Skip undefined events
+                        }
+                        // Format the event date using dayjs
+                        const formattedDate = dayjs(event.eventDate).format('YYYY-MM-DD HH:mm');
+
+                        return (
+                            <Grid item xs={12} sm={6} md={4} key={event._id}>
+                                <Chip
+                                    label={`${formattedDate}: ${event.eventName}`}  // Updated label with formatted date
+                                    variant="outlined"
+                                    color="primary"
+                                    sx={{
+                                        fontSize: "0.7rem",
+                                        borderRadius: "16px",
+                                        width: "100%", // Chip takes full width of its container
+                                    }}
+                                    deleteIcon={
+                                        loggedInUser?.isAdmin ? (
+                                            <IconButton size="small" onClick={() => handleDeleteEvent(event._id)}>
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        ) : null // Hide delete icon for non-admin users
+                                    }
+                                    onDelete={loggedInUser?.isAdmin ? () => handleDeleteEvent(event._id) : undefined} // Disable delete action for non-admin
+                                    onClick={() => loggedInUser?.isAdmin && handleEditEvent(event)}
+                                />
+                            </Grid>
+                        );
+                    })}
                 </Grid>
+            ) : (
+                <Typography variant="body2" sx={{ fontSize: "1rem", textAlign: "center" }}>
+                    No upcoming events.
+                </Typography>
+            )}
+        </Box>
+
+        {/* Add/Edit Event Form for Admin */}
+        {loggedInUser?.isAdmin && (
+            <>
+                <Typography variant="h6" sx={{ mb: 1, mt: 2 }}>
+                    Add/Edit Event
+                </Typography>
+                <DateTimePicker label="Event Date" value={eventDate} onChange={setEventDate} textField={<TextField fullWidth />} />
+                <TextField label="Event Name" value={eventName} onChange={(e) => setEventName(e.target.value)} sx={{ mt: 2, width: "100%" }} />
+                <Button variant="contained" onClick={editingEvent ? handleSaveEvent : handleAddEvent} sx={{ mt: 1 }}>
+                    {editingEvent ? "Save Event" : "Add Event"}
+                </Button>
+            </>
+        )}
+    </Paper>
+</Grid>
+
+
+</Grid>
+            
 
                 {/*User Details Section*/}
                 <Grid item xs={12}>
