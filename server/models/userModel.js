@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const courseSchema = new mongoose.Schema({
     code: String,
@@ -70,6 +71,10 @@ const userSchema = new mongoose.Schema({
     profilePhoto: {  // New field for storing profile photo path
         type: String,
         default: null  // Default value is null if no photo is uploaded
+    },
+    studentID: {
+        type: Number,
+        unique: true
     }
 });
 
@@ -85,6 +90,16 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.correctPassword = async function (candidatePassword, userPassword) {
     return await bcrypt.compare(candidatePassword, userPassword);
 };
+
+// Pre-save hook to set the studentID field
+userSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        const User = mongoose.model('User', userSchema);
+        const maxStudentID = await User.findOne().sort('-studentID').select('studentID').exec();
+        this.studentID = maxStudentID ? maxStudentID.studentID + 1 : 100000;
+    }
+    next();
+});
 
 const User = mongoose.model('User', userSchema);
 
