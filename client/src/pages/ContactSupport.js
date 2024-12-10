@@ -4,6 +4,7 @@ import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
 import axios from "axios";
 import { checkUserLoggedIn, getUserLoggedIn } from "../utils/authUtils";
+import { jwtDecode } from "jwt-decode";
 
 
 function ContactSupport() {
@@ -16,17 +17,45 @@ function ContactSupport() {
   const [errorMessage, setErrorMessage] = useState(""); 
 
 
-  useEffect(() => {
-   
-  // Get logged-in user's details using authUtils
-  const username = getUserLoggedIn();
-  if (username) {
-    setFormData((prev) => ({
-      ...prev,
-      username: username,
-      email: `${username}@example.com`, 
-    }));
-  }
+
+
+useEffect(() => {
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem("token"); 
+      if (!token) {
+        console.error("No token found. Redirecting to login.");
+        window.location.href = "/login"; 
+        return;
+      }
+
+      const decodedToken = jwtDecode(token); 
+      const userId = decodedToken.id; 
+
+      if (!userId) {
+        console.error("User ID not found in token.");
+        return;
+      }
+
+      const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, 
+        },
+      });
+
+      const user = response.data.data.user;
+
+      setFormData((prev) => ({
+        ...prev,
+        username: user.username,
+        email: user.email,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
+    }
+  };
+
+  fetchUserData();
 }, []);
 
   const handleChange = (e) => {
@@ -36,7 +65,7 @@ function ContactSupport() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Validation for message length
+    
   if (formData.message.length < 10) {
     setErrorMessage("Message must be greater than 10 characters.");
     setOpenModal(true);
@@ -53,12 +82,11 @@ function ContactSupport() {
   
       console.log("Message Sent:", response.data);
   
-      // Clear the message after submission
       setFormData((prev) => ({ ...prev, message: "" }));
   
-      // Open the modal
+      
       setOpenModal(true);
-      setErrorMessage(""); // Clear any error messages
+      setErrorMessage(""); 
     } catch (error) {
       console.error("Error submitting form:", error);
       setErrorMessage("Failed to send message. Please try again.");

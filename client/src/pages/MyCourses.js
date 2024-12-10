@@ -4,7 +4,7 @@ import ProfileMenu from "../components/profile-menu/ProfileMenu";
 import { Container, Typography, Box, Grid, Card, CardContent, Button, ListItemText } from "@mui/material";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { checkUserLoggedIn, getUserLoggedIn } from "../utils/authUtils"; // Import utility functions
+import { checkUserLoggedIn, getUserLoggedIn } from "../utils/authUtils"; 
 
 function MyCourses() {
     const [myCourses, setMyCourses] = useState([]);
@@ -31,7 +31,7 @@ function MyCourses() {
 
                 console.log("Decoded User ID:", userId);
 
-                // get courses using token and userId
+                
                 const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}/courses`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -66,19 +66,19 @@ function MyCourses() {
 
             console.log("Course Code:", courseCode);
 
-            // Fetch the program data to find the course
+            
             const programResponse = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/programs`);
             const programs = programResponse.data.data;
             const program = programs.find((p) => p.courses.some((c) => c.code === courseCode));
 
-            // Check if the program exists
+            
             if (!program) {
                 console.error("Course not found in any program");
                 setErrorMessage("Course not found in any program.");
                 return;
             }
 
-            // Find the course in the program
+            
             const programCourse = program.courses.find((c) => c.code === courseCode);
             if (!programCourse) {
                 console.error("Course not found in the program");
@@ -86,10 +86,10 @@ function MyCourses() {
                 return;
             }
 
-            // Increase the seatsAvailable by 1
+            
             const updatedCourseData = { seatsAvailable: programCourse.seatsAvailable + 1 };
 
-            // Update the course data in the database
+            
             const patchResponse = await axios.patch(`${process.env.REACT_APP_SERVER_URL}/api/v1/courses/${programCourse._id}?programCode=${program.code}`, updatedCourseData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -102,7 +102,7 @@ function MyCourses() {
                 return;
             }
 
-            // Remove the course from the user's courses
+            
             const response = await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}/courses?courseCode=${courseCode}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -110,7 +110,7 @@ function MyCourses() {
             });
 
             if (response.status === 200) {
-                // Refresh the course list
+                
                 setMyCourses((prevCourses) => prevCourses.filter((course) => course.code !== courseCode));
                 setTotalCredits((prevTotal) => prevTotal - myCourses.find((course) => course.code === courseCode)?.credits || 0);
             }

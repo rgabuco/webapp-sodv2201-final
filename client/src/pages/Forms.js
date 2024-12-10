@@ -66,14 +66,13 @@ function Forms() {
 
   const handleDelete = async (id) => {
     try {
-      const token = localStorage.getItem("token"); // Retrieve the auth token
+      const token = localStorage.getItem("token"); 
       await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/forms/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      // Remove the deleted message from the state
       setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== id));
     } catch (error) {
       console.error("Error deleting message:", error);
