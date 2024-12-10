@@ -148,13 +148,20 @@ exports.createUser = catchAsync(async (req, res, next) => {
 
 // Update a user by ID
 exports.updateUser = catchAsync(async (req, res, next) => {
+    // Remove studentID from req.body to prevent modification
+    if (req.body.studentID) {
+        delete req.body.studentID;
+    }
+
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true
     });
+
     if (!user) {
         return next(new AppError('User not found', 404));
     }
+
     res.status(200).json({
         status: 'success',
         data: {
