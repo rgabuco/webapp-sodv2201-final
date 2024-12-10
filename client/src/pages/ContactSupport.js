@@ -36,6 +36,12 @@ function ContactSupport() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Validation for message length
+  if (formData.message.length < 10) {
+    setErrorMessage("Message must be greater than 10 characters.");
+    setOpenModal(true);
+    return; 
+  }
   
     try {
       
@@ -99,30 +105,35 @@ function ContactSupport() {
       </Container>
 
       <Modal open={openModal} onClose={handleCloseModal}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: { xs: 300, sm: 400, md: 500 }, // Responsive width
-            bgcolor: "background.paper",
-            border: "2px solid #000",
-            boxShadow: 24,
-            p: 4,
-          }}
-        >
-          <Typography variant="h6" component="h2">
-            Message Sent
-          </Typography>
-          <Typography sx={{ mt: 2 }}>Your message has been sent. Support will respond within 48 hours.</Typography>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-            <Button onClick={handleCloseModal} variant="contained" color="primary">
-              Close
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
+  <Box
+    sx={{
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: { xs: 300, sm: 400, md: 500 }, 
+      bgcolor: "background.paper",
+      border: "2px solid #000",
+      boxShadow: 24,
+      p: 4,
+    }}
+  >
+    <Typography variant="h6" component="h2">
+      {errorMessage ? "Error" : "Message Sent"}
+    </Typography>
+    <Typography sx={{ mt: 2 }}>
+      {errorMessage
+        ? errorMessage
+        : "Your message has been sent. Support will respond within 48 hours."}
+    </Typography>
+    <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+      <Button onClick={handleCloseModal} variant="contained" color="primary">
+        Close
+      </Button>
+    </Box>
+  </Box>
+</Modal>
+
     </div>
   );
 }
