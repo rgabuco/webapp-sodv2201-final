@@ -4,6 +4,8 @@ import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";  // Updated import
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+
 
 function Profile() {
   const [loggedInUser, setLoggedInUser] = useState(null);
@@ -20,6 +22,11 @@ function Profile() {
     program: "",
     profilePhoto: "", 
   });
+
+  const [originalFormData, setOriginalFormData] = useState(null);
+  const [successModalOpen, setSuccessModalOpen] = useState(false); // For success modal
+  const [errorModalOpen, setErrorModalOpen] = useState(false);     // For error modal
+
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -118,47 +125,66 @@ function Profile() {
   
   
 
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
+// Store the original form data when editing starts
+const handleEdit = () => {
+  setOriginalFormData({ ...formData }); // Save the original data
+  setIsEditing(true);
+};
 
-  const handleSave = async () => {
-    setLoading(true);
-    setError(null);
-    const token = localStorage.getItem('token');
-    const decodedToken = jwtDecode(token);
-    const userId = decodedToken.id;  // Extract userId from the token
-  
-    const formDataToSend = new FormData();
-    
-    // Append regular form data
-    Object.keys(formData).forEach(key => {
-      if (key !== "profilePhoto") {
-        formDataToSend.append(key, formData[key]);
-      }
+// Track changes to determine if the Save button should be enabled
+const hasChanges = () => {
+  if (!originalFormData) return false; // No changes if original data is not set
+  // Check if any field has changed
+  for (const key in originalFormData) {
+    if (originalFormData[key] !== formData[key]) {
+      return true; // A change is detected
+    }
+  }
+  return false;
+};
+
+
+const handleSave = async () => {
+  setLoading(true);
+  setError(null);
+  const token = localStorage.getItem('token');
+  const decodedToken = jwtDecode(token);
+  const userId = decodedToken.id;
+
+  const formDataToSend = new FormData();
+
+  // Append regular form data
+  Object.keys(formData).forEach(key => {
+    if (key !== "profilePhoto") {
+      formDataToSend.append(key, formData[key]);
+    }
+  });
+
+  // Append the profile photo if exists
+  if (formData.profilePhoto) {
+    const photoBlob = dataURLtoBlob(formData.profilePhoto); // Convert the base64 image string to a Blob
+    formDataToSend.append("profilePhoto", photoBlob);
+  }
+
+  try {
+    // Use PATCH for updating user data
+    await axios.patch(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}`, formDataToSend, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
-  
-    // Append the profile photo if exists
-    if (formData.profilePhoto) {
-      const photoBlob = dataURLtoBlob(formData.profilePhoto);  // Convert the base64 image string to a Blob
-      formDataToSend.append("profilePhoto", photoBlob);
-    }
-  
-    try {
-      // Use PATCH for updating user data
-      await axios.patch(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}`, formDataToSend, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setIsEditing(false);  // Exit editing mode
-    } catch (error) {
-      setError("Error saving user data.");
-      console.error("Error saving user data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setIsEditing(false); // Exit editing mode
+    setOriginalFormData(formData); // Update original data to match saved data
+    setSuccessModalOpen(true); // Open success modal
+  } catch (error) {
+    setError("Error saving user data.");
+    setErrorModalOpen(true); // Open error modal
+    console.error("Error saving user data:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
   
   // Helper function to convert base64 string to Blob
   const dataURLtoBlob = (dataURL) => {
@@ -238,20 +264,26 @@ function Profile() {
                 <CircularProgress />
               ) : (
                 <>
-                  {isEditing ? (
-                    <>
-                      <Button onClick={handleSave} variant="contained" color="primary">
-                        Save
-                      </Button>
-                      <Button onClick={() => setIsEditing(false)} variant="outlined">
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <Button onClick={handleEdit} variant="contained" color="primary">
-                      Edit
-                    </Button>
-                  )}
+{isEditing ? (
+  <>
+    <Button
+      onClick={handleSave}
+      variant="contained"
+      color="primary"
+      disabled={!hasChanges()} // Disable Save button if no changes
+    >
+      Save
+    </Button>
+    <Button onClick={() => setIsEditing(false)} variant="outlined">
+      Cancel
+    </Button>
+  </>
+) : (
+  <Button onClick={handleEdit} variant="contained" color="primary">
+    Edit
+  </Button>
+)}
+
                 </>
               )}
             </CardActions>
@@ -259,6 +291,28 @@ function Profile() {
           {error && <Typography color="error">{error}</Typography>} {/* Display error message */}
         </Box>
       </Container>
+
+            {/* Success Modal */}
+            <Dialog open={successModalOpen} onClose={() => setSuccessModalOpen(false)}>
+        <DialogTitle>Success</DialogTitle>
+        <DialogContent>
+          <Typography>Your profile has been updated successfully!</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSuccessModalOpen(false)} color="primary">Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Error Modal */}
+      <Dialog open={errorModalOpen} onClose={() => setErrorModalOpen(false)}>
+        <DialogTitle>Error</DialogTitle>
+        <DialogContent>
+          <Typography>There was an error saving your profile. Please try again later.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setErrorModalOpen(false)} color="primary">Close</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
