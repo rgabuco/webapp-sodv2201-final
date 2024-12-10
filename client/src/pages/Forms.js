@@ -138,23 +138,7 @@ function Forms() {
     );
 });
 
-  /** 
-  const filteredMessages = messages.filter((msg) => {
-    const query = searchQuery.toLowerCase();
-    const isReadMatch = isReadFilter === null ? true : msg.isRead === isReadFilter;
-    const dateMatch = dateFilter ? new Date(msg.date).toISOString().split("T")[0].includes(dateFilter) : true;
-    console.log("dateMatch",dateMatch);
-console.log("dateFilter",dateFilter);
-console.log('new Date(msg.Date).toISOString().split("T")[0]',new Date(msg.Date).toISOString().split("T")[0]);
-    return (
-      (msg.username.toLowerCase().includes(query) ||
-        msg.email.toLowerCase().includes(query) ||
-        msg.message.toLowerCase().includes(query) ||
-        new Date(msg.date).toLocaleString().includes(query)) &&
-      isReadMatch &&
-      dateMatch
-    );
-  });*/
+  
 
   return (
     <div>
