@@ -14,7 +14,7 @@ router
 router
     .route('/:id')
     .get(courseController.getCourse)
-    .patch(authController.isAdmin, courseController.updateCourse) //admin only
+    .patch(courseController.updateCourse)
     .delete(authController.isAdmin, courseController.deleteCourse); //admin only
 
 module.exports = router;
