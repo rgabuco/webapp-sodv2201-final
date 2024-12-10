@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Container, Box, TextField, Button, Typography, Card, CardContent, CardActions, Avatar } from "@mui/material";
+import { Container, Box, TextField, Button, Typography, Card, CardContent, CardActions, Avatar, CircularProgress } from "@mui/material";
 import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";  // Updated import
 
 function Profile() {
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false); // New state to track loading
+  const [error, setError] = useState(null); // New state to track errors
   const [formData, setFormData] = useState({
     username: "",
     firstName: "",
@@ -14,60 +18,164 @@ function Profile() {
     phone: "",
     department: "",
     program: "",
-    profilePhoto: "", // Add this field for the profile photo
+    profilePhoto: "", 
   });
 
   useEffect(() => {
-    const storedUsers = JSON.parse(localStorage.getItem("bvc-users")) || [];
-    const currentUsername = localStorage.getItem("userLoggedIn");
-    const currentUser = storedUsers.find((user) => user.username === currentUsername);
-
-    if (currentUser) {
-      setLoggedInUser(currentUser);
-      setFormData(currentUser);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError("No token found.");
+      return;
     }
+  
+    const decodedToken = jwtDecode(token);
+    const userId = decodedToken.id;  // Extract user ID from token
+  
+    if (!userId) {
+      setError("User ID not found in token.");
+      return;
+    }
+  
+    // Fetch user data using the userId
+    const fetchUserData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const userData = response.data.data.user;
+        setLoggedInUser(userData);
+        setFormData(userData);
+      } catch (error) {
+        setError("Error fetching user data.");
+        console.error("Error fetching user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchUserData();
   }, []);
+  
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Check the file size (2MB = 2 * 1024 * 1024 bytes)
-      if (file.size > 2 * 1024 * 1024) {
-        alert("File size exceeds 2 MB. Please upload a smaller file.");
-        return;
+  
+    if (!file) return;
+  
+    // Check file size
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File size exceeds 2 MB. Please upload a smaller file.");
+      return;
+    }
+  
+    // Show preview of the image
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({ ...formData, profilePhoto: reader.result }); // Store the image as a base64 string
+    };
+    reader.readAsDataURL(file);
+  
+    // Prepare the file for upload
+    const formDataToSend = new FormData();
+    formDataToSend.append('profilePhoto', file); // Append the file to FormData
+  
+    const token = localStorage.getItem('token');
+    const decodedToken = jwtDecode(token);
+    const userId = decodedToken.id; // Extract user ID from token
+  
+    try {
+      const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}/profile-photo`, {
+        method: 'POST',
+        body: formDataToSend,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+  
+      if (response.ok) {
+        const jsonData = await response.json(); // Parse JSON response directly
+        setFormData({ ...formData, profilePhoto: jsonData.data.profilePhoto }); // Update the form data with the new photo URL
+      } else {
+        const errorText = await response.text(); // Read error text if response is not OK
+        console.error("Error uploading photo:", errorText);
+        alert('Error uploading photo. Please try again.');
       }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, profilePhoto: reader.result }); // Store the image as a base64 string
-      };
-      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Error during photo upload:", err);
+      alert('Error uploading photo. Please try again.');
     }
   };
+  
+  
 
   const handleEdit = () => {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    const storedUsers = JSON.parse(localStorage.getItem("bvc-users")) || [];
-    const updatedUsers = storedUsers.map((user) => (user.username === formData.username ? formData : user));
-    localStorage.setItem("bvc-users", JSON.stringify(updatedUsers));
-    setIsEditing(false);
+  const handleSave = async () => {
+    setLoading(true);
+    setError(null);
+    const token = localStorage.getItem('token');
+    const decodedToken = jwtDecode(token);
+    const userId = decodedToken.id;  // Extract userId from the token
+  
+    const formDataToSend = new FormData();
+    
+    // Append regular form data
+    Object.keys(formData).forEach(key => {
+      if (key !== "profilePhoto") {
+        formDataToSend.append(key, formData[key]);
+      }
+    });
+  
+    // Append the profile photo if exists
+    if (formData.profilePhoto) {
+      const photoBlob = dataURLtoBlob(formData.profilePhoto);  // Convert the base64 image string to a Blob
+      formDataToSend.append("profilePhoto", photoBlob);
+    }
+  
+    try {
+      // Use PATCH for updating user data
+      await axios.patch(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}`, formDataToSend, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setIsEditing(false);  // Exit editing mode
+    } catch (error) {
+      setError("Error saving user data.");
+      console.error("Error saving user data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const handleDelete = () => {
-    const storedUsers = JSON.parse(localStorage.getItem("bvc-users")) || [];
-    const updatedUsers = storedUsers.filter((user) => user.username !== formData.username);
-    localStorage.setItem("bvc-users", JSON.stringify(updatedUsers));
-    localStorage.removeItem("userLoggedIn");
-    window.location.href = "/signup";
+  
+  // Helper function to convert base64 string to Blob
+  const dataURLtoBlob = (dataURL) => {
+    const byteString = atob(dataURL.split(',')[1]);
+    const ab = new ArrayBuffer(byteString.length);
+    const ua = new Uint8Array(ab);
+    
+    for (let i = 0; i < byteString.length; i++) {
+      ua[i] = byteString.charCodeAt(i);
+    }
+    
+    return new Blob([ab], { type: 'image/jpeg' });  // Adjust type if necessary
   };
+  
+  
+  
+  
 
   return (
     <div>
@@ -126,25 +234,29 @@ function Profile() {
               />
             </CardContent>
             <CardActions>
-              {isEditing ? (
-                <>
-                  <Button onClick={handleSave} variant="contained" color="primary">
-                    Save
-                  </Button>
-                  <Button onClick={() => setIsEditing(false)} variant="outlined">
-                    Cancel
-                  </Button>
-                </>
+              {loading ? (
+                <CircularProgress />
               ) : (
-                <Button onClick={handleEdit} variant="contained" color="primary">
-                  Edit
-                </Button>
+                <>
+                  {isEditing ? (
+                    <>
+                      <Button onClick={handleSave} variant="contained" color="primary">
+                        Save
+                      </Button>
+                      <Button onClick={() => setIsEditing(false)} variant="outlined">
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button onClick={handleEdit} variant="contained" color="primary">
+                      Edit
+                    </Button>
+                  )}
+                </>
               )}
-              <Button onClick={handleDelete} variant="outlined" color="error">
-                Delete Account
-              </Button>
             </CardActions>
           </Card>
+          {error && <Typography color="error">{error}</Typography>} {/* Display error message */}
         </Box>
       </Container>
     </div>

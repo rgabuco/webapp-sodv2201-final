@@ -1,6 +1,8 @@
 const express = require('express');
+const path = require('path');
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
+const fs = require('fs');
 
 const router = express.Router();
 
@@ -27,5 +29,9 @@ router
     .get(userController.getUserCourses)
     .post(userController.addUserCourse)
     .delete(userController.deleteUserCourse);
+
+// Route to upload profile photo using express-fileupload
+router.post('/:userId/profile-photo', userController.uploadProfilePhoto);
+
 
 module.exports = router;

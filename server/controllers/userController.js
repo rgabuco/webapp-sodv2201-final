@@ -2,6 +2,9 @@ const User = require('../models/userModel');
 const Program = require('../models/programModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const fs = require('fs'); // For working with file paths
+const path = require('path');
+
 
 // Get all users
 exports.getAllUsers = catchAsync(async (req, res, next) => {
@@ -174,4 +177,58 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
         data: user
     });
 });
+
+// Upload profile photo
+exports.uploadProfilePhoto = catchAsync(async (req, res, next) => {
+    console.log('Uploaded File:', req.files.profilePhoto);  // <-- Check if file is received
+
+    // Find the user by ID from params
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+        return next(new AppError('User not found', 404));
+    }
+
+    if (!req.files || !req.files.profilePhoto) {
+        return next(new AppError('No file uploaded', 400));
+    }
+
+    const profilePhoto = req.files.profilePhoto;
+
+    // Set the file path and upload location
+    const uploadDir = path.join(__dirname, '..', 'uploads', 'profile_photos');
+    const fileName = Date.now() + '-' + profilePhoto.name;
+    const uploadPath = path.join(uploadDir, fileName);
+
+    console.log('Upload Path:', uploadPath);  // Log the upload path
+
+    // Ensure the upload directory exists
+    try {
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+            console.log('Upload directory created:', uploadDir);
+        }
+    } catch (err) {
+        return next(new AppError('Error creating upload directory', 500));
+    }
+
+    // Move the uploaded file to the desired location
+    profilePhoto.mv(uploadPath, async (err) => {
+        if (err) {
+            return next(new AppError('Error uploading the file', 500));
+        }
+
+        // Save the file path in the database
+        user.profilePhoto = `/uploads/profile_photos/${fileName}`;
+        await user.save();
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                profilePhoto: user.profilePhoto
+            }
+        });
+    });
+});
+
+
 

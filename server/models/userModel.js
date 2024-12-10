@@ -66,6 +66,10 @@ const userSchema = new mongoose.Schema({
     courses: {
         type: [courseSchema],
         default: []
+    },
+    profilePhoto: {  // New field for storing profile photo path
+        type: String,
+        default: null  // Default value is null if no photo is uploaded
     }
 });
 

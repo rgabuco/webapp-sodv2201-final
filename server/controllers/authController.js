@@ -85,3 +85,29 @@ exports.isAdmin = catchAsync(async (req, res, next) => {
     req.user = currentUser;
     next();
 });
+
+// Middleware to check if the user is logged in
+exports.protect = catchAsync(async (req, res, next) => {
+    // Get token from request headers
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+        return next(new AppError('You are not logged in! Please log in to get access.', 401));
+    }
+
+    // Verify the token
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+    // Check if the user still exists
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+        return next(new AppError('The user belonging to this token does no longer exist.', 401));
+    }
+
+    // Attach user to the request object so that the next middleware has access to user info
+    req.user = currentUser;
+    next();
+});
