@@ -116,14 +116,14 @@ const Programs = () => {
 
                                                                 <CalendarTodayIcon sx={{ marginRight: 1, color: "#1976d2" }} />
                                                                 <Typography variant="body1" sx={{ color: "#34405E" }}>
-                                                                    <strong>Start Date:</strong> {program.startDate}
+                                                                    <strong>Start Date:</strong> {program.startDate.split("T")[0]}
                                                                 </Typography>
                                                             </Box>
 
                                                             <Box sx={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
                                                                 <CalendarTodayIcon sx={{ marginRight: 1, color: "#1976d2" }} />
                                                                 <Typography variant="body1" sx={{ color: "#34405E" }}>
-                                                                    <strong>End Date:</strong> {program.endDate}
+                                                                    <strong>End Date:</strong> {program.endDate.split("T")[0]}
                                                                 </Typography>
                                                             </Box>
 
