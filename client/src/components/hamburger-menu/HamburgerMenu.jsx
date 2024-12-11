@@ -8,63 +8,66 @@ import BookIcon from "@mui/icons-material/Book";
 import InfoIcon from "@mui/icons-material/Info";
 
 const navItems = [
-  { text: "Home", icon: <HomeIcon />, path: "/" },
-  { text: "Programs", icon: <SchoolIcon />, path: "/programs" },
-  { text: "Courses", icon: <BookIcon />, path: "/courses" },
-  { text: "About", icon: <InfoIcon />, path: "/about" },
+    { text: "Home", icon: <HomeIcon />, path: "/" },
+    { text: "Programs", icon: <SchoolIcon />, path: "/programs" },
+    { text: "Courses", icon: <BookIcon />, path: "/courses" },
+    { text: "About", icon: <InfoIcon />, path: "/about" },
 ];
 
 const HamburgerMenu = () => {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const navigate = useNavigate();
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const navigate = useNavigate();
 
-  const handleDrawerOpen = () => setDrawerOpen(true);
-  const handleDrawerClose = () => setDrawerOpen(false);
+    const handleDrawerOpen = () => setDrawerOpen(true);
+    const handleDrawerClose = () => setDrawerOpen(false);
 
-  const handleNavigation = (path) => {
-    navigate(path);
-    handleDrawerClose();
-  };
+    const handleNavigation = path => {
+        navigate(path);
+        handleDrawerClose();
+    };
 
-  const list = () => (
-    <List>
-      {navItems.map((item) => (
-        <ListItem button key={item.text} onClick={() => handleNavigation(item.path)}>
-          <ListItemIcon>{item.icon}</ListItemIcon>
-          <ListItemText primary={item.text} />
-        </ListItem>
-      ))}
-    </List>
-  );
+    const list = () => (
+        <List>
+            {navItems.map(item => (
+                <ListItem button key={item.text} onClick={() => handleNavigation(item.path)}>
+                    <ListItemIcon>{item.icon}</ListItemIcon>
+                    <ListItemText primary={item.text} />
+                </ListItem>
+            ))}
+        </List>
+    );
 
-  return (
-    <>
-      <IconButton
-        edge="start"
-        color="inherit"
-        aria-label="menu"
-        onMouseEnter={handleDrawerOpen}
-        sx={{
-          borderRadius: "20%",
-          border: "2px solid white", // Adjust the color and width as needed
-          marginRight: 1,
-        }}
-      >
-        <MenuIcon />
-      </IconButton>
-      <Drawer
-        anchor="left"
-        open={drawerOpen}
-        onClose={handleDrawerClose}
-        PaperProps={{
-          sx: { width: 300 }, // Increase the width of the drawer
-          onMouseLeave: handleDrawerClose,
-        }}
-      >
-        <div onMouseEnter={handleDrawerOpen}>{list()}</div>
-      </Drawer>
-    </>
-  );
+    return (
+        <>
+            <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                onMouseEnter={handleDrawerOpen}
+                sx={{
+                    borderRadius: "20%",
+                    border: "2px solid white", // Adjust the color and width as needed
+                    marginRight: 1,
+                }}
+            >
+                <MenuIcon />
+            </IconButton>
+            <Drawer
+                anchor="left"
+                open={drawerOpen}
+                onClose={handleDrawerClose}
+                PaperProps={{
+                    sx: { width: 300 }, // Increase the width of the drawer
+                    onMouseLeave: handleDrawerClose,
+                }}
+                ModalProps={{
+                    keepMounted: true, // Keep the drawer mounted to avoid focus issues
+                }}
+            >
+                <div onMouseEnter={handleDrawerOpen}>{list()}</div>
+            </Drawer>
+        </>
+    );
 };
 
 export default HamburgerMenu;

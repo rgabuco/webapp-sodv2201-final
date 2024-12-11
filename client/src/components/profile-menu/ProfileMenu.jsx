@@ -64,7 +64,7 @@ const ProfileMenu = ({ onLogout = () => {} }) => {
     const list = () => (
         <List>
             {navItems.map(item => (
-                <ListItem button="true" key={item.text} onClick={() => handleNavigation(item.path)}>
+                <ListItem button key={item.text} onClick={() => handleNavigation(item.path)}>
                     <ListItemIcon>{item.icon}</ListItemIcon>
                     <ListItemText primary={item.text} />
                 </ListItem>
@@ -90,8 +90,11 @@ const ProfileMenu = ({ onLogout = () => {} }) => {
                     sx: { width: 300 },
                     onMouseLeave: handleDrawerClose,
                 }}
+                ModalProps={{
+                    keepMounted: true, // Keep the drawer mounted to avoid focus issues
+                }}
             >
-                {list()}
+                <div onMouseEnter={handleDrawerOpen}>{list()}</div>
             </Drawer>
         </>
     );
