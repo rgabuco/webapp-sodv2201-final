@@ -4,12 +4,12 @@ import ProfileMenu from "../components/profile-menu/ProfileMenu";
 import { Container, Typography, Box, Grid, Card, CardContent, Button, ListItemText } from "@mui/material";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { checkUserLoggedIn, getUserLoggedIn } from "../utils/authUtils"; 
+import { checkUserLoggedIn, getUserLoggedIn } from "../utils/authUtils";
 
 function MyCourses() {
     const [myCourses, setMyCourses] = useState([]);
     const [totalCredits, setTotalCredits] = useState(0);
-    const [errorMessage, setErrorMessage] = useState("");
+    const [, setErrorMessage] = useState("");
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -31,7 +31,6 @@ function MyCourses() {
 
                 console.log("Decoded User ID:", userId);
 
-                
                 const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}/courses`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -53,7 +52,7 @@ function MyCourses() {
         fetchCourses();
     }, []);
 
-    const handleRemoveCourse = async (courseCode) => {
+    const handleRemoveCourse = async courseCode => {
         try {
             const token = localStorage.getItem("token");
             if (!token) {
@@ -66,35 +65,34 @@ function MyCourses() {
 
             console.log("Course Code:", courseCode);
 
-            
             const programResponse = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/programs`);
             const programs = programResponse.data.data;
-            const program = programs.find((p) => p.courses.some((c) => c.code === courseCode));
+            const program = programs.find(p => p.courses.some(c => c.code === courseCode));
 
-            
             if (!program) {
                 console.error("Course not found in any program");
                 setErrorMessage("Course not found in any program.");
                 return;
             }
 
-            
-            const programCourse = program.courses.find((c) => c.code === courseCode);
+            const programCourse = program.courses.find(c => c.code === courseCode);
             if (!programCourse) {
                 console.error("Course not found in the program");
                 setErrorMessage("Course not found in the program.");
                 return;
             }
 
-            
             const updatedCourseData = { seatsAvailable: programCourse.seatsAvailable + 1 };
 
-            
-            const patchResponse = await axios.patch(`${process.env.REACT_APP_SERVER_URL}/api/v1/courses/${programCourse._id}?programCode=${program.code}`, updatedCourseData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const patchResponse = await axios.patch(
+                `${process.env.REACT_APP_SERVER_URL}/api/v1/courses/${programCourse._id}?programCode=${program.code}`,
+                updatedCourseData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
             if (patchResponse.status !== 200) {
                 console.error("Failed to update course data");
@@ -102,7 +100,6 @@ function MyCourses() {
                 return;
             }
 
-            
             const response = await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${userId}/courses?courseCode=${courseCode}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -110,9 +107,8 @@ function MyCourses() {
             });
 
             if (response.status === 200) {
-                
-                setMyCourses((prevCourses) => prevCourses.filter((course) => course.code !== courseCode));
-                setTotalCredits((prevTotal) => prevTotal - myCourses.find((course) => course.code === courseCode)?.credits || 0);
+                setMyCourses(prevCourses => prevCourses.filter(course => course.code !== courseCode));
+                setTotalCredits(prevTotal => prevTotal - myCourses.find(course => course.code === courseCode)?.credits || 0);
             }
         } catch (error) {
             console.error("Error removing course:", error);
@@ -120,7 +116,7 @@ function MyCourses() {
         }
     };
 
-    const formatDate = (date) => {
+    const formatDate = date => {
         const options = { year: "numeric", month: "2-digit", day: "2-digit" };
         return new Date(date).toLocaleDateString("en-CA", options); // 'en-CA' format: YYYY-MM-DD
     };
