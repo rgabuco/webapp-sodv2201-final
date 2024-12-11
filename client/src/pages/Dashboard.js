@@ -350,7 +350,7 @@ function Dashboard() {
                     Dashboard
                 </Typography>
                 {/* Centered Calendar and Upcoming Events Section */}
-                <Grid container spacing={2} justifyContent="center" sx={{ mb: 0.5 }}>
+    <Grid container spacing={2} justifyContent="center" sx={{ mb: 0.5 }}>
                     {/* Calendar Section */}
                     <Grid item xs={12} sm={6} sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
     <Paper elevation={3} sx={{ display: 'flex', flexDirection: 'row', padding: 2, width: '100%' }}>
@@ -365,20 +365,33 @@ function Dashboard() {
         </Box>
       </Box>
 
-{/* Events List */}
-<Box sx={{ width: '50%' }}>
-  <Typography variant="h6" sx={{ mb: 1, fontSize: '1rem', textAlign: 'center' }}>
+ {/* Events List */}
+<Box sx={{ width: '50%', overflowY: 'auto', maxHeight: '300px' }}>
+  {/* Sticky Header */}
+  <Typography 
+    variant="h6" 
+    sx={{ 
+      mb: 1, 
+      fontSize: '1rem', 
+      textAlign: 'center', 
+      position: 'sticky',  // This makes it sticky at the top
+      top: 0,              // Keeps it at the top of the box
+      backgroundColor: 'white',  // Ensures the header stays on top of the scrolling content
+      zIndex: 1            // Ensures it's not covered by other content
+    }}
+  >
     Events on {dayjs(value).format('MMM DD, YYYY')}
   </Typography>
-  <Box sx={{ padding: 1, textAlign: 'center' }}>
+
+  <Box sx={{ padding: 1, textAlign: 'center', maxHeight: 'calc(100% - 10px)' }}>
     {selectedEvents.length > 0 ? (
       selectedEvents
         .sort((a, b) => {
           const dateA = dayjs(a.eventDate);
           const dateB = dayjs(b.eventDate);
-          if (dateA.isBefore(dateB)) return -1; // a comes before b
-          if (dateA.isAfter(dateB)) return 1;  // b comes before a
-          return 0; // if dates are equal, maintain original order
+          if (dateA.isBefore(dateB)) return -1;  // a comes before b
+          if (dateA.isAfter(dateB)) return 1;   // b comes before a
+          return 0;  // if dates are equal, maintain original order
         })
         .map((event, index) => (
           <div key={index}>
@@ -392,6 +405,7 @@ function Dashboard() {
     )}
   </Box>
 </Box>
+
 
     </Paper>
   </Grid>
