@@ -35,7 +35,7 @@ function StudentList() {
     program: "",
   });
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 6; // Number of items per page
+  const itemsPerPage = 9; // Number of items per page
 
   useEffect(() => {
     const fetchUsers = async () => {
