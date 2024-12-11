@@ -55,6 +55,8 @@ function Signup() {
             department: "Software Development",
             program: programsArray[0]?.name || "",
             isAdmin: "false",
+            profilePhoto: null,
+            studentID: null,
         },
     });
 
@@ -70,6 +72,8 @@ function Signup() {
             program: formData.program,
             isAdmin: formData.isAdmin === "true",
             courses: [],
+            profilePhoto: formData.profilePhoto,
+            studentID: formData.studentID,
         };
 
         console.log("formattedData", JSON.stringify(formattedData, null, 2));

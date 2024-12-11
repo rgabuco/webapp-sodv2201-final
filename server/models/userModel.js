@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const AutoIncrement = require('mongoose-sequence')(mongoose);
+const Counter = require('./counterModel');
 
 const courseSchema = new mongoose.Schema({
     code: String,
@@ -94,8 +95,12 @@ userSchema.methods.correctPassword = async function (candidatePassword, userPass
 // Pre-save hook to set the studentID field
 userSchema.pre('save', async function (next) {
     if (this.isNew) {
-        const lastUser = await this.constructor.findOne().sort({ studentID: -1 });
-        this.studentID = lastUser ? lastUser.studentID + 1 : 100000;
+        const counter = await Counter.findOneAndUpdate(
+            { name: 'studentID' },
+            { $inc: { value: 1 } },
+            { new: true, upsert: true }
+        );
+        this.studentID = counter.value;
     }
     next();
 });

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const Counter = require('./models/counterModel');
 
 dotenv.config();
 
@@ -11,6 +12,12 @@ const connectDB = async () => {
         console.log('MongoDB connected');
         //check the collection names int the database
         const collections = await mongoose.connection.db.listCollections().toArray();
+
+        const counter = await Counter.findOne({ name: 'studentID' });
+        if (!counter) {
+            await Counter.create({ name: 'studentID', value: 100000 });
+        }
+        
     } catch (error) {
         console.error(error.message);
         process.exit(1);
