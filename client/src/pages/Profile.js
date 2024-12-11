@@ -38,6 +38,8 @@ const convertToBase64 = (file) => {
   const [originalFormData, setOriginalFormData] = useState(null);
   const [successModalOpen, setSuccessModalOpen] = useState(false); // For success modal
   const [errorModalOpen, setErrorModalOpen] = useState(false);     // For error modal
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
 
   useEffect(() => {
@@ -110,8 +112,8 @@ const convertToBase64 = (file) => {
   
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/v1/users/${loggedInUser._id}/profile-photo`, 
-        formData, 
+        `http://localhost:5000/api/v1/users/${loggedInUser._id}/profile-photo`,
+        formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -120,18 +122,28 @@ const convertToBase64 = (file) => {
         }
       );
   
-      // Update the formData with the new profile photo URL from the response
+      // Check if the response contains the expected data
       if (response.data && response.data.data && response.data.data.profilePhoto) {
         setFormData((prevState) => ({
           ...prevState,
           profilePhoto: response.data.data.profilePhoto, // New image URL from backend
         }));
+        setSuccessMessage("Profile photo uploaded successfully.");
+      } else {
+        // Handle unexpected response
+        setError("Error: Photo upload failed. Please try again.");
       }
     } catch (error) {
       console.error("Error uploading profile photo:", error);
-      setError("Error uploading profile photo.");
+      // More specific error handling
+      if (error.response && error.response.data) {
+        setError(error.response.data.message || "Error uploading photo.");
+      } else {
+        setError("Error uploading photo. Please try again later.");
+      }
     }
   };
+  
   
   
   
@@ -170,10 +182,8 @@ const handleSave = async () => {
     }
   });
 
-  // Check if any fields were updated
-  if (Object.keys(updateData).length > 0) {
-    try {
-      // Send PATCH request to update profile fields
+  try {
+    if (Object.keys(updateData).length > 0) {
       const response = await axios.patch(
         `${process.env.REACT_APP_SERVER_URL}/api/v1/users/${loggedInUser._id}`,
         updateData,
@@ -184,43 +194,75 @@ const handleSave = async () => {
         }
       );
       console.log('Profile fields updated:', response.data);
-    } catch (error) {
-      console.error('Error saving profile fields:', error);
     }
-  }
 
-  // If a profile photo was selected, upload it
-  if (selectedFile) {
-    const formData = new FormData();
-    formData.append('profilePhoto', selectedFile);
+    // Handle Profile Photo Upload
+    if (selectedFile) {
+      const photoFormData = new FormData(); // Rename to avoid conflict with outer formData
+      const timestamp = new Date().getTime();  // Add timestamp to file name
+      const newFileName = `${timestamp}-${selectedFile.name}`;  // Create a unique file name
+      const updatedFile = new File([selectedFile], newFileName, { type: selectedFile.type });
 
-    try {
-      // Send POST request to update the profile photo
-      const response = await axios.post(
-        `${process.env.REACT_APP_SERVER_URL}/api/v1/users/${loggedInUser._id}/profile-photo`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'multipart/form-data',
-          },
+      console.log("Uploading file:", updatedFile);  // Log new file details
+
+      // Append the new file to the FormData
+      photoFormData.append('profilePhoto', updatedFile);
+
+      try {
+        const photoResponse = await axios.post(
+          `${process.env.REACT_APP_SERVER_URL}/api/v1/users/${loggedInUser._id}/profile-photo`,
+          photoFormData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        console.log('Profile photo uploaded:', photoResponse.data);
+
+        // If the photo is updated, update the state
+        if (photoResponse.data.status === 'success') {
+          setFormData((prevState) => ({
+            ...prevState,
+            profilePhoto: photoResponse.data.data.profilePhoto, // New photo URL
+          }));
+          // Notify user of success
+          setSuccessMessage('Profile photo updated successfully!');
+        } else {
+          // Notify user that no update was needed
+          setSuccessMessage('No changes made to your profile photo.');
         }
-      );
-      console.log('Profile photo uploaded:', response.data);
-      // Optionally, update the formData with the new photo URL if needed
-      setFormData((prevState) => ({
-        ...prevState,
-        profilePhoto: response.data.data.profilePhoto, // New photo URL
-      }));
-    } catch (error) {
-      console.error('Error saving profile photo:', error);
-    }
-  }
 
-  // After saving the profile and photo, exit editing mode
-  setIsEditing(false); // Disable editing
-  setOriginalFormData({ ...formData }); // Save the current form data as original
+      } catch (error) {
+        console.error('Error uploading profile photo:', error.response ? error.response.data : error.message);
+        setError("Error uploading profile photo.");
+        setErrorModalOpen(true); // Open error modal only for photo upload failure
+      }
+    }
+
+    setSuccessModalOpen(true); // Open success modal on successful save
+  } catch (error) {
+    console.error('Error saving profile:', error.response ? error.response.data : error.message);
+    setErrorModalOpen(true); // Open error modal on failure for profile save
+  } finally {
+    setIsEditing(false); // Disable editing
+    setOriginalFormData({ ...formData }); // Save the current form data as original
+  }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

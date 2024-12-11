@@ -4,6 +4,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const fs = require('fs'); // For working with file paths
 const path = require('path');
+const crypto = require('crypto');
 
 
 // Get all users
@@ -189,7 +190,6 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
 });
 
 
-// Handle the profile photo upload
 exports.uploadProfilePhoto = async (req, res) => {
     try {
         // Check if file is uploaded
@@ -207,14 +207,55 @@ exports.uploadProfilePhoto = async (req, res) => {
             });
         }
 
-        // Generate a unique file name using timestamp
-        const uniqueFileName = `${Date.now()}_${file.name}`;
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            return res.status(404).send('User not found.');
+        }
 
-        // Save file to the uploads folder with the unique file name
+        // If the user already has a profile photo, compare the hashes
+        if (user.profilePhoto) {
+            const existingFilePath = path.join(__dirname, '..', 'uploads', user.profilePhoto.split('/uploads/')[1]);
+
+            // Debugging: Log the existing file path and the new file hash
+            console.log('Existing File Path:', existingFilePath);
+            const newFileHash = crypto.createHash('sha256').update(file.data).digest('hex');
+            console.log('New File Hash:', newFileHash);
+
+            let existingFileHash = null;
+            if (fs.existsSync(existingFilePath)) {
+                existingFileHash = crypto.createHash('sha256').update(fs.readFileSync(existingFilePath)).digest('hex');
+                console.log('Existing File Hash:', existingFileHash);
+            }
+
+            // If it's the same file, no need to upload, return the existing photo URL
+            if (newFileHash === existingFileHash) {
+                return res.status(200).json({
+                    status: 'success',
+                    message: 'This is the same photo as the existing one. No update needed.',
+                    data: { profilePhoto: user.profilePhoto }
+                });
+            }
+
+            // Cleanup: Delete the old photo if it exists
+            if (fs.existsSync(existingFilePath)) {
+                fs.unlinkSync(existingFilePath); // Delete the old photo
+                console.log('Old photo deleted');
+            } else {
+                console.log('No old photo found, skipping delete');
+            }
+        }
+
+        // Generate a new file name based on the timestamp or user ID (e.g., prevent overwriting)
+        const uniqueFileName = `${user._id}_${Date.now()}_${file.name}`;
         const uploadPath = path.join(__dirname, '..', 'uploads', uniqueFileName);
+
+        // Log the upload path and file name for debugging
+        console.log('Uploading file to:', uploadPath);
+
+        // Save the file to the uploads folder
         await file.mv(uploadPath);
 
-        // Update user with the uploaded file path (overwrite the old photo path)
+        // Update the user with the new file path
         await User.findByIdAndUpdate(req.params.userId, { profilePhoto: `/uploads/${uniqueFileName}` });
 
         // Send a success response
@@ -228,6 +269,11 @@ exports.uploadProfilePhoto = async (req, res) => {
         res.status(500).send('Error uploading photo. Please try again.');
     }
 };
+
+
+
+
+
 
   
 
