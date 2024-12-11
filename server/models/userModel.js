@@ -94,9 +94,8 @@ userSchema.methods.correctPassword = async function (candidatePassword, userPass
 // Pre-save hook to set the studentID field
 userSchema.pre('save', async function (next) {
     if (this.isNew) {
-        const User = mongoose.model('User', userSchema);
-        const maxStudentID = await User.findOne().sort('-studentID').select('studentID').exec();
-        this.studentID = maxStudentID ? maxStudentID.studentID + 1 : 100000;
+        const lastUser = await this.constructor.findOne().sort({ studentID: -1 });
+        this.studentID = lastUser ? lastUser.studentID + 1 : 100000;
     }
     next();
 });

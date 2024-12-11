@@ -148,20 +148,30 @@ exports.createUser = catchAsync(async (req, res, next) => {
 
 // Update a user by ID
 exports.updateUser = catchAsync(async (req, res, next) => {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const { profilePhoto, ...otherFields } = req.body;
+
+    let updateData = { ...otherFields };  // Fields like name, email, etc.
+
+    // Handle profile photo if provided
+    if (profilePhoto) {
+        updateData.profilePhoto = profilePhoto;
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
         runValidators: true
     });
+    
     if (!user) {
         return next(new AppError('User not found', 404));
     }
+
     res.status(200).json({
         status: 'success',
-        data: {
-            user
-        }
+        data: { user }
     });
 });
+
 
 // Delete a user by ID
 exports.deleteUser = catchAsync(async (req, res, next) => {
@@ -178,57 +188,50 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     });
 });
 
-// Upload profile photo
-exports.uploadProfilePhoto = catchAsync(async (req, res, next) => {
-    console.log('Uploaded File:', req.files.profilePhoto);  // <-- Check if file is received
 
-    // Find the user by ID from params
-    const user = await User.findById(req.params.userId);
-    if (!user) {
-        return next(new AppError('User not found', 404));
-    }
-
-    if (!req.files || !req.files.profilePhoto) {
-        return next(new AppError('No file uploaded', 400));
-    }
-
-    const profilePhoto = req.files.profilePhoto;
-
-    // Set the file path and upload location
-    const uploadDir = path.join(__dirname, '..', 'uploads', 'profile_photos');
-    const fileName = Date.now() + '-' + profilePhoto.name;
-    const uploadPath = path.join(uploadDir, fileName);
-
-    console.log('Upload Path:', uploadPath);  // Log the upload path
-
-    // Ensure the upload directory exists
+// Handle the profile photo upload
+exports.uploadProfilePhoto = async (req, res) => {
     try {
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-            console.log('Upload directory created:', uploadDir);
-        }
-    } catch (err) {
-        return next(new AppError('Error creating upload directory', 500));
-    }
-
-    // Move the uploaded file to the desired location
-    profilePhoto.mv(uploadPath, async (err) => {
-        if (err) {
-            return next(new AppError('Error uploading the file', 500));
+        // Check if file is uploaded
+        if (!req.files || Object.keys(req.files).length === 0) {
+            return res.status(400).send('No files were uploaded.');
         }
 
-        // Save the file path in the database
-        user.profilePhoto = `/uploads/profile_photos/${fileName}`;
-        await user.save();
+        const file = req.files.profilePhoto;
 
+        // Validate file type (JPG, PNG, or GIF)
+        if (!['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(file.mimetype)) {
+            return res.status(400).json({
+                status: 'fail',
+                message: 'Invalid file type. Please upload a JPG, PNG, or GIF image.'
+            });
+        }
+
+        // Generate a unique file name using timestamp
+        const uniqueFileName = `${Date.now()}_${file.name}`;
+
+        // Save file to the uploads folder with the unique file name
+        const uploadPath = path.join(__dirname, '..', 'uploads', uniqueFileName);
+        await file.mv(uploadPath);
+
+        // Update user with the uploaded file path (overwrite the old photo path)
+        await User.findByIdAndUpdate(req.params.userId, { profilePhoto: `/uploads/${uniqueFileName}` });
+
+        // Send a success response
         res.status(200).json({
             status: 'success',
-            data: {
-                profilePhoto: user.profilePhoto
-            }
+            message: 'Profile photo uploaded successfully!',
+            data: { profilePhoto: `/uploads/${uniqueFileName}` }
         });
-    });
-});
+    } catch (error) {
+        console.error('Error uploading photo:', error);
+        res.status(500).send('Error uploading photo. Please try again.');
+    }
+};
+
+  
+
+
 
 
 
