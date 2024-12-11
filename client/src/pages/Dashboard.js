@@ -23,8 +23,6 @@ import "react-calendar/dist/Calendar.css";
 import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import PersonIcon from "@mui/icons-material/Person";
@@ -43,7 +41,7 @@ function Dashboard() {
     const [eventDate, setEventDate] = useState(dayjs());
     const [eventName, setEventName] = useState("");
     const [studentsData, setStudentsData] = useState([]);
-    const [errorMessage, setErrorMessage] = useState("");
+    const [, setErrorMessage] = useState("");
 
     useEffect(() => {
         const isBrowser = typeof window !== "undefined"; // Check for browser context
