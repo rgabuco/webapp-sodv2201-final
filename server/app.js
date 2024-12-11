@@ -15,23 +15,31 @@ const app = express();
 
 // Middleware to parse JSON
 app.use(express.json());
-// Enable CORS for all routes
+// Enable CORS for all routes with improved handling for pre-flight
 app.use(cors({
-    origin: 'http://localhost:3000',  // Your frontend URL
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],  // Allowed HTTP methods
-    credentials: true  // Allow credentials (cookies, authorization headers)
+    origin: 'http://localhost:3000',  // Frontend URL
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'], // Allow PUT method along with other methods
+    allowedHeaders: ['Content-Type', 'Authorization'],  // Allow required headers
+    credentials: true  // Allow credentials like cookies or authorization headers
 }));
 
+// Optionally handle preflight (OPTIONS) requests globally
+app.options('*', cors());  // Allow pre-flight (OPTIONS) requests to all routes
+
+
+// Handle express-fileupload
+app.use(fileUpload({
+    limits: { fileSize: 5 * 1024 * 1024 }, // Max file size (5MB)
+    abortOnLimit: true, // Abort upload if file is too large
+    responseOnLimit: 'File size exceeds the limit of 5MB', // Custom response for file size error
+}));
+
+// Serve uploaded files from the correct directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
-
-// Use express-fileupload to handle file uploads
-app.use(fileUpload({ limits: { fileSize: 5 * 1024 * 1024 } })); // <-- Optional: file size limit (e.g., 5MB)
-
-// Serve uploaded files from the correct directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Route setup
 app.use('/api/v1/users', userRoutes);

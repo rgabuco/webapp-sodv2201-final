@@ -111,3 +111,14 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.user = currentUser;
     next();
 });
+
+// authController.js
+
+// Restrict user from updating other people's profile photo
+exports.restrictToSelf = (req, res, next) => {
+    if (req.user.id !== req.params.userId) {
+      return next(new AppError('You can only update your own profile photo', 403));
+    }
+    next();
+  };
+  

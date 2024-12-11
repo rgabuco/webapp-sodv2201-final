@@ -30,8 +30,14 @@ router
     .post(userController.addUserCourse)
     .delete(userController.deleteUserCourse);
 
-// Route to upload profile photo using express-fileupload
-router.post('/:userId/profile-photo', userController.uploadProfilePhoto);
+// Route to upload profile photo for the user (auth required)
+router.post('/:userId/profile-photo', (req, res, next) => {
+    console.log('Request URL:', req.originalUrl); // Log the request URL
+    console.log('Request Method:', req.method); // Log the method
+    next();
+  }, userController.uploadProfilePhoto);
+  
+
 
 
 module.exports = router;
