@@ -352,83 +352,49 @@ function Dashboard() {
                 {/* Centered Calendar and Upcoming Events Section */}
                 <Grid container spacing={2} justifyContent="center" sx={{ mb: 0.5 }}>
                     {/* Calendar Section */}
-                    <Grid item xs={12} sm={6}>
-                        <Paper
-                            elevation={3}
-                            sx={{
-                                padding: 0.5,
-                                maxWidth: 650,
-                                width: "100%",
-                                height: "400px",
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                        >
-                            <Typography variant="h6" sx={{ mb: 1, fontSize: "1rem", textAlign: "center" }}>
-                                Calendar
-                            </Typography>
+                    <Grid item xs={12} sm={6} sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+    <Paper elevation={3} sx={{ display: 'flex', flexDirection: 'row', padding: 2, width: '100%' }}>
+      
+      {/* Calendar */}
+      <Box sx={{ width: '50%' }}>
+        <Typography variant="h6" sx={{ mb: 1, fontSize: '1rem', textAlign: 'center' }}>
+          Calendar
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Calendar onChange={handleDateChange} value={value.toDate()} sx={{ width: '100%' }} />
+        </Box>
+      </Box>
 
-                            {/* Calendar Section */}
-                            <Box
-                                sx={{
-                                    width: "100%",
-                                    flexGrow: 1,
-                                    display: "flex",
-                                    justifyContent: "center",
-                                    alignItems: "center",
-                                    // Adjust maxHeight to allow full calendar to display without clipping
-                                    height: "300px", // You can set this value based on the space you need for the calendar
-                                    overflow: "visible", // Ensure no clipping of the calendar
-                                }}
-                            >
-                                <Calendar
-                                    onChange={handleDateChange}
-                                    value={value.toDate()}
-                                    sx={{
-                                        width: "100%",
-                                        height: "100%", // Ensure the calendar takes full height within the Box
-                                    }}
-                                />
-                            </Box>
+{/* Events List */}
+<Box sx={{ width: '50%' }}>
+  <Typography variant="h6" sx={{ mb: 1, fontSize: '1rem', textAlign: 'center' }}>
+    Events on {dayjs(value).format('MMM DD, YYYY')}
+  </Typography>
+  <Box sx={{ padding: 1, textAlign: 'center' }}>
+    {selectedEvents.length > 0 ? (
+      selectedEvents
+        .sort((a, b) => {
+          const dateA = dayjs(a.eventDate);
+          const dateB = dayjs(b.eventDate);
+          if (dateA.isBefore(dateB)) return -1; // a comes before b
+          if (dateA.isAfter(dateB)) return 1;  // b comes before a
+          return 0; // if dates are equal, maintain original order
+        })
+        .map((event, index) => (
+          <div key={index}>
+            {event.eventName} at {dayjs(event.eventDate).format('HH:mm')}
+          </div>
+        ))
+    ) : (
+      <Typography variant="body2" sx={{ fontSize: "0.7rem", textAlign: "center" }}>
+        No events
+      </Typography>
+    )}
+  </Box>
+</Box>
 
-                            {/* Events List */}
-                            <Typography variant="subtitle1" sx={{ mt: 1, fontSize: "0.75rem", textAlign: "center" }}>
-                                Events on {value.format("YYYY D, MMMM")}:
-                            </Typography>
-
-                            <Box
-                                sx={{
-                                    maxHeight: "100px", // Adjust this height if necessary
-                                    overflowY: "auto", // Allow vertical scrolling if content overflows
-                                    width: "100%",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    alignItems: "center",
-                                }}
-                            >
-                                {selectedEvents.length > 0 ? (
-                                    <List dense>
-                                        {/* Sort the events in ascending order by eventDate */}
-                                        {selectedEvents
-                                            .sort((a, b) => (dayjs(a.eventDate).isBefore(dayjs(b.eventDate)) ? -1 : 1)) // Sort by eventDate
-                                            .map((event, index) => (
-                                                <ListItem key={index} sx={{ padding: 0 }}>
-                                                    <Typography variant="body2" sx={{ fontSize: ".75rem", textAlign: "center" }}>
-                                                        {event.eventName}: {dayjs(event.eventDate).format("HH:mm")} {/* Show only time */}
-                                                    </Typography>
-                                                </ListItem>
-                                            ))}
-                                    </List>
-                                ) : (
-                                    <Typography variant="body2" sx={{ fontSize: "0.7rem", textAlign: "center" }}>
-                                        No events
-                                    </Typography>
-                                )}
-                            </Box>
-                        </Paper>
-                    </Grid>
+    </Paper>
+  </Grid>
 
                     {/* Upcoming Events Section */}
                     <Grid item xs={12} sm={6}>
@@ -457,25 +423,35 @@ function Dashboard() {
                                 }}
                             >
                                 {upcomingEvents.length > 0 ? (
-                                    <Grid container spacing={1} sx={{ flexWrap: "wrap" }}>
+                                    <Grid container spacing={1} sx={{ flexWrap: "wrap", overflow: "hidden"  }}>
                                         {upcomingEvents.map(event => {
                                             if (!event) {
                                                 console.error("Undefined event:", event); // Log undefined events
                                                 return null; // Skip undefined events
                                             }
                                             // Format the event date using dayjs
-                                            const formattedDate = dayjs(event.eventDate).format("YYYY-MM-DD HH:mm");
-
+                                            const formattedDate = dayjs(event.eventDate).format("MM-DD-YYYY [at] HH:mm");
                                             return (
                                                 <Grid item xs={12} sm={6} md={4} key={event._id}>
                                                     <Chip
-                                                        label={`${formattedDate}: ${event.eventName}`} // Updated label with formatted date
+                                                            label={
+                                                                <Box>
+                                                                    <Typography variant="body2" sx={{fontSize: "0.75rem" }}>
+                                                                        {event.eventName}
+                                                                    </Typography>
+                                                                    <Typography variant="body2" sx={{ fontSize: "0.6rem", color: "text.secondary" }}>
+                                                                        {formattedDate}
+                                                                    </Typography>
+                                                                </Box>}
                                                         variant="outlined"
                                                         color="primary"
                                                         sx={{
                                                             fontSize: "0.7rem",
                                                             borderRadius: "16px",
-                                                            width: "100%", // Chip takes full width of its container
+                                                            maxWidth: "300px", // Control the width of the chip
+                                                            width: "100%", // Ensure chip uses full width of its container
+                                                            marginBottom: "8px", // Add space between rows of chips
+                                                            marginRight: "8px", // Add space between chips horizontall
                                                         }}
                                                         deleteIcon={
                                                             loggedInUser?.isAdmin ? (
