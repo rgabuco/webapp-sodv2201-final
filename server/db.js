@@ -13,11 +13,18 @@ const connectDB = async () => {
         //check the collection names int the database
         const collections = await mongoose.connection.db.listCollections().toArray();
 
+        // Initialize the counter if it doesn't exist
         const counter = await Counter.findOne({ name: 'studentID' });
         if (!counter) {
-            await Counter.create({ name: 'studentID', value: 100000 });
+            // Find the maximum studentID in the User collection
+            const maxStudentIDUser = await User.findOne().sort({ studentID: -1 });
+            console.log("maxStudentIDUser", maxStudentIDUser);
+            const maxStudentID = maxStudentIDUser ? maxStudentIDUser.studentID : 100000;
+
+            // Create the counter with the maximum studentID value
+            await Counter.create({ name: 'studentID', value: maxStudentID });
         }
-        
+
     } catch (error) {
         console.error(error.message);
         process.exit(1);
