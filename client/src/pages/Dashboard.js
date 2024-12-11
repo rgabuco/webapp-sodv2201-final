@@ -4,8 +4,6 @@ import {
     Typography,
     Paper,
     Grid,
-    List,
-    ListItem,
     Button,
     Chip,
     IconButton,
@@ -343,274 +341,273 @@ function Dashboard() {
 
     return (
         <div>
-          <Navbar rightMenu={<ProfileMenu />} />
-    
-          <Container maxWidth="lg" sx={{ mt: 5, color: "#34405E" }}>
-            <Typography variant="h4" gutterBottom sx={{ mb: 3, textAlign: "center" }}>
-              Dashboard
-            </Typography>
-            {/* Centered Calendar and Upcoming Events Section */}
-            <Grid container spacing={2} justifyContent="center" sx={{ mb: 0.5 }}>
-              {/* Calendar Section */}
-              <Grid item xs={12} sm={6} sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Paper elevation={3} sx={{ display: 'flex', flexDirection: 'row', padding: 2, width: '100%' }}>
-                  {/* Calendar */}
-                  <Box sx={{ width: '50%' }}>
-                    <Typography variant="h6" sx={{ mb: 1, fontSize: '1rem', textAlign: 'center' }}>
-                      Calendar
-                    </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                      <Calendar onChange={handleDateChange} value={value.toDate()} sx={{ width: '100%' }} />
-                    </Box>
-                  </Box>
-    
-                  {/* Events List */}
-                  <Box sx={{ width: '50%' }}>
-                    <Typography variant="h6" sx={{ mb: 1, fontSize: '1rem', textAlign: 'center' }}>
-                        Events on {dayjs(value).format('MMM DD, YYYY')}
-                    </Typography>
-                    <Box
-                        sx={{
-                        padding: 1,
-                        textAlign: 'center',
-                        overflowY: 'auto', // This allows scrolling when content overflows
-                        maxHeight: '300px', // Set a maxHeight to control when the scrollbar appears
-                        }}
-                    >
-                        {selectedEvents.length > 0 ? (
-                        selectedEvents
-                            .sort((a, b) => {
-                            const dateA = dayjs(a.eventDate);
-                            const dateB = dayjs(b.eventDate);
-                            if (dateA.isBefore(dateB)) return -1; // a comes before b
-                            if (dateA.isAfter(dateB)) return 1;  // b comes before a
-                            return 0; // if dates are equal, maintain original order
-                            })
-                            .map((event, index) => (
-                            <div key={index}>
-                                {event.eventName} at {dayjs(event.eventDate).format('HH:mm')}
-                            </div>
-                            ))
-                        ) : (
-                        <Typography variant="body2" sx={{ fontSize: "0.7rem", textAlign: "center" }}>
-                            No events
-                        </Typography>
-                        )}
-                    </Box>
-                  </Box>
-    
-                </Paper>
-              </Grid>
-    
-              {/* Upcoming Events Section */}
-              <Grid item xs={12} sm={6}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    padding: 0.5,
-                    maxWidth: 650,
-                    width: "100%",
-                    height: "450px", // Allow the paper to expand vertically if needed
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <Typography variant="h6" sx={{ mb: 1, fontSize: "0.8rem", textAlign: "center" }}>
-                    Upcoming Events
-                  </Typography>
-    
-                  {/* Scrollable container for events */}
-                  <Box
-                    sx={{
-                      flexGrow: 1,
-                      overflowY: "auto", // Enable vertical scrolling
-                      maxHeight: loggedInUser?.isAdmin ? "250px" : "calc(100% - 70px)", // If Admin, limit height, else take available space
-                      width: "100%", // Ensure Box takes full width
-                    }}
-                  >
-                    {upcomingEvents.length > 0 ? (
-                      <Grid container spacing={1} sx={{ flexWrap: "wrap", overflow: "hidden" }}>
-                        {upcomingEvents.map(event => {
-                          if (!event) {
-                            console.error("Undefined event:", event); // Log undefined events
-                            return null; // Skip undefined events
-                          }
-                          // Format the event date using dayjs
-                          const formattedDate = dayjs(event.eventDate).format("MM-DD-YYYY [at] HH:mm");
-                          return (
-                            <Grid item xs={12} sm={6} md={4} key={event._id}>
-                              <Chip
-                                label={
-                                  <Box>
-                                    <Typography variant="body2" sx={{ fontSize: "0.75rem" }}>
-                                      {event.eventName}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ fontSize: "0.6rem", color: "text.secondary" }}>
-                                      {formattedDate}
-                                    </Typography>
-                                  </Box>}
-                                variant="outlined"
-                                color="primary"
-                                sx={{
-                                  fontSize: "0.7rem",
-                                  borderRadius: "16px",
-                                  maxWidth: "300px", // Control the width of the chip
-                                  width: "100%", // Ensure chip uses full width of its container
-                                  marginBottom: "8px", // Add space between rows of chips
-                                  marginRight: "8px", // Add space between chips horizontally
-                                }}
-                                deleteIcon={
-                                  loggedInUser?.isAdmin ? (
-                                    <IconButton size="small" onClick={() => handleDeleteEvent(event._id)}>
-                                      <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                  ) : null // Hide delete icon for non-admin users
-                                }
-                                onDelete={loggedInUser?.isAdmin ? () => handleDeleteEvent(event._id) : undefined} // Disable delete action for non-admin
-                                onClick={() => loggedInUser?.isAdmin && handleEditEvent(event)}
-                              />
-                            </Grid>
-                          );
-                        })}
-                      </Grid>
-                    ) : (
-                      <Typography variant="body2" sx={{ fontSize: "1rem", textAlign: "center" }}>
-                        No upcoming events.
-                      </Typography>
-                    )}
-                  </Box>
-    
-                  {/* Add/Edit Event Form for Admin */}
-                  {loggedInUser?.isAdmin && (
-                    <>
-                      <Typography variant="h6" sx={{ mb: 1, mt: 2 }}>
-                        {editingEvent ? "Edit Event" : "Add Event"}
-                      </Typography>
-    
-                      <DateTimePicker
-                        label="Event Date"
-                        value={eventDate}
-                        onChange={setEventDate}
-                        textField={<TextField fullWidth />}
-                      />
-                      <TextField
-                        label="Event Name"
-                        value={eventName}
-                        onChange={e => setEventName(e.target.value)}
-                        sx={{ mt: 2, width: "100%" }}
-                      />
-                      <Button variant="contained" onClick={editingEvent ? handleSaveEvent : handleAddEvent} sx={{ mt: 1 }}>
-                        {editingEvent ? "Save Event" : "Add Event"}
-                      </Button>
-                    </>
-                  )}
-                </Paper>
-              </Grid>
-    
-            </Grid>
-    
-            {/* User Details Section */}
-            <Grid item xs={12}>
-              <Paper sx={{ padding: 3, mt: 2 }}>
-                <Typography variant="h6">
-                  <PersonIcon sx={{ marginRight: 1 }} />
-                  User Details
+            <Navbar rightMenu={<ProfileMenu />} />
+
+            <Container maxWidth="lg" sx={{ mt: 5, color: "#34405E" }}>
+                <Typography variant="h4" gutterBottom sx={{ mb: 3, textAlign: "center" }}>
+                    Dashboard
                 </Typography>
-                <Box sx={{ mt: 2 }}>
-                  {/* Show only Name and Account Type for Admins */}
-                  {loggedInUser?.isAdmin ? (
-                    <>
-                      <Typography variant="body1">
-                        Name: {loggedInUser?.firstName} {loggedInUser?.lastName}
-                      </Typography>
-                      <Typography variant="body1">Account Type: Admin</Typography>
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="body1">
-                        Name: {loggedInUser?.firstName} {loggedInUser?.lastName}
-                      </Typography>
-                      <Typography variant="body1">Student ID: {loggedInUser?.studentID}</Typography>
-                      <Typography variant="body1">Program: {loggedInUser?.program}</Typography>
-                      <Typography variant="body1">Department: {loggedInUser?.department}</Typography>
-                      <Typography variant="body1">Account Type: Student</Typography>
-                      <Typography variant="body1">
-                        Enrollment Status: <span style={{ color: getStatusColor(status) }}>{status}</span>
-                      </Typography>
-                    </>
-                  )}
-                </Box>
-    
-                {status === "Enrolled" && !loggedInUser?.isAdmin && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="h6">Courses Enrolled:</Typography>
-                    <TableContainer component={Paper}>
-                      <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Code</TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Days</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {loggedInUser.courses.map(course => (
-                            <TableRow key={course.code}>
-                              <TableCell>{course.code}</TableCell>
-                              <TableCell>{course.name}</TableCell>
-                              <TableCell>{course.days}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Box>
-                )}
-    
-                {loggedInUser?.isAdmin && studentsData.length > 0 && (
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2, height: "200px" }}>
-                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "30%" }}>
-                      <Typography variant="body1">Enrolled Students</Typography>
-                      <Gauge
-                        value={enrolledCount}
-                        minvalue={0}
-                        maxvalue={studentsData.length}
-                        label={`Enrolled: ${enrolledCount}`}
-                        color="#4CAF50" // Green color for enrolled students
-                        sx={{ height: "100%" }} // Ensure Gauge takes full height
-                      />
-                    </Box>
-    
-                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "30%" }}>
-                      <Typography variant="body1">Total Students</Typography>
-                      <Gauge
-                        value={totalStudentsCount}
-                        minvalue={0}
-                        maxvalue={studentsData.length}
-                        label={`Total Students: ${totalStudentsCount}`}
-                        color="warning" // Warning color for total students
-                        sx={{ height: "100%" }} // Ensure Gauge takes full height
-                      />
-                    </Box>
-    
-                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "30%" }}>
-                      <Typography variant="body1">Total Events Registered</Typography>
-                      <Gauge
-                        value={totalEventsRegistered}
-                        minvalue={0}
-                        maxvalue={totalEventsRegistered} // Ensure maxvalue is set appropriately
-                        label={`Total Events Registered: ${totalEventsRegistered}`}
-                        color="info" // Info color for total courses
-                        sx={{ height: "100%" }} // Ensure Gauge takes full height
-                      />
-                    </Box>
-                  </Box>
-                )}
-              </Paper>
-            </Grid>
-          </Container>
+                {/* Centered Calendar and Upcoming Events Section */}
+                <Grid container spacing={2} justifyContent="center" sx={{ mb: 0.5 }}>
+                    {/* Calendar Section */}
+                    <Grid item xs={12} sm={6} sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
+                        <Paper elevation={3} sx={{ display: "flex", flexDirection: "row", padding: 2, width: "100%" }}>
+                            {/* Calendar */}
+                            <Box sx={{ width: "50%" }}>
+                                <Typography variant="h6" sx={{ mb: 1, fontSize: "1rem", textAlign: "center" }}>
+                                    Calendar
+                                </Typography>
+                                <Box sx={{ display: "flex", justifyContent: "center" }}>
+                                    <Calendar onChange={handleDateChange} value={value.toDate()} sx={{ width: "100%" }} />
+                                </Box>
+                            </Box>
+
+                            {/* Events List */}
+                            <Box sx={{ width: "50%" }}>
+                                <Typography variant="h6" sx={{ mb: 1, fontSize: "1rem", textAlign: "center" }}>
+                                    Events on {dayjs(value).format("MMM DD, YYYY")}
+                                </Typography>
+                                <Box
+                                    sx={{
+                                        padding: 1,
+                                        textAlign: "center",
+                                        overflowY: "auto", // This allows scrolling when content overflows
+                                        maxHeight: "300px", // Set a maxHeight to control when the scrollbar appears
+                                    }}
+                                >
+                                    {selectedEvents.length > 0 ? (
+                                        selectedEvents
+                                            .sort((a, b) => {
+                                                const dateA = dayjs(a.eventDate);
+                                                const dateB = dayjs(b.eventDate);
+                                                if (dateA.isBefore(dateB)) return -1; // a comes before b
+                                                if (dateA.isAfter(dateB)) return 1; // b comes before a
+                                                return 0; // if dates are equal, maintain original order
+                                            })
+                                            .map((event, index) => (
+                                                <div key={index}>
+                                                    {event.eventName} at {dayjs(event.eventDate).format("HH:mm")}
+                                                </div>
+                                            ))
+                                    ) : (
+                                        <Typography variant="body2" sx={{ fontSize: "0.7rem", textAlign: "center" }}>
+                                            No events
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Box>
+                        </Paper>
+                    </Grid>
+
+                    {/* Upcoming Events Section */}
+                    <Grid item xs={12} sm={6}>
+                        <Paper
+                            elevation={3}
+                            sx={{
+                                padding: 0.5,
+                                maxWidth: 650,
+                                width: "100%",
+                                height: "450px", // Allow the paper to expand vertically if needed
+                                display: "flex",
+                                flexDirection: "column",
+                            }}
+                        >
+                            <Typography variant="h6" sx={{ mb: 1, fontSize: "0.8rem", textAlign: "center" }}>
+                                Upcoming Events
+                            </Typography>
+
+                            {/* Scrollable container for events */}
+                            <Box
+                                sx={{
+                                    flexGrow: 1,
+                                    overflowY: "auto", // Enable vertical scrolling
+                                    maxHeight: loggedInUser?.isAdmin ? "250px" : "calc(100% - 70px)", // If Admin, limit height, else take available space
+                                    width: "100%", // Ensure Box takes full width
+                                }}
+                            >
+                                {upcomingEvents.length > 0 ? (
+                                    <Grid container spacing={1} sx={{ flexWrap: "wrap", overflow: "hidden" }}>
+                                        {upcomingEvents.map(event => {
+                                            if (!event) {
+                                                console.error("Undefined event:", event); // Log undefined events
+                                                return null; // Skip undefined events
+                                            }
+                                            // Format the event date using dayjs
+                                            const formattedDate = dayjs(event.eventDate).format("MM-DD-YYYY [at] HH:mm");
+                                            return (
+                                                <Grid item xs={12} sm={6} md={4} key={event._id}>
+                                                    <Chip
+                                                        label={
+                                                            <Box>
+                                                                <Typography variant="body2" sx={{ fontSize: "0.75rem" }}>
+                                                                    {event.eventName}
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ fontSize: "0.6rem", color: "text.secondary" }}>
+                                                                    {formattedDate}
+                                                                </Typography>
+                                                            </Box>
+                                                        }
+                                                        variant="outlined"
+                                                        color="primary"
+                                                        sx={{
+                                                            fontSize: "0.7rem",
+                                                            borderRadius: "16px",
+                                                            maxWidth: "300px", // Control the width of the chip
+                                                            width: "100%", // Ensure chip uses full width of its container
+                                                            marginBottom: "8px", // Add space between rows of chips
+                                                            marginRight: "8px", // Add space between chips horizontally
+                                                        }}
+                                                        deleteIcon={
+                                                            loggedInUser?.isAdmin ? (
+                                                                <IconButton size="small" onClick={() => handleDeleteEvent(event._id)}>
+                                                                    <DeleteIcon fontSize="small" />
+                                                                </IconButton>
+                                                            ) : null // Hide delete icon for non-admin users
+                                                        }
+                                                        onDelete={loggedInUser?.isAdmin ? () => handleDeleteEvent(event._id) : undefined} // Disable delete action for non-admin
+                                                        onClick={() => loggedInUser?.isAdmin && handleEditEvent(event)}
+                                                    />
+                                                </Grid>
+                                            );
+                                        })}
+                                    </Grid>
+                                ) : (
+                                    <Typography variant="body2" sx={{ fontSize: "1rem", textAlign: "center" }}>
+                                        No upcoming events.
+                                    </Typography>
+                                )}
+                            </Box>
+
+                            {/* Add/Edit Event Form for Admin */}
+                            {loggedInUser?.isAdmin && (
+                                <>
+                                    <Typography variant="h6" sx={{ mb: 1, mt: 2 }}>
+                                        {editingEvent ? "Edit Event" : "Add Event"}
+                                    </Typography>
+
+                                    <DateTimePicker
+                                        label="Event Date"
+                                        value={eventDate}
+                                        onChange={setEventDate}
+                                        textField={<TextField fullWidth />}
+                                    />
+                                    <TextField
+                                        label="Event Name"
+                                        value={eventName}
+                                        onChange={e => setEventName(e.target.value)}
+                                        sx={{ mt: 2, width: "100%" }}
+                                    />
+                                    <Button variant="contained" onClick={editingEvent ? handleSaveEvent : handleAddEvent} sx={{ mt: 1 }}>
+                                        {editingEvent ? "Save Event" : "Add Event"}
+                                    </Button>
+                                </>
+                            )}
+                        </Paper>
+                    </Grid>
+                </Grid>
+
+                {/* User Details Section */}
+                <Grid item xs={12}>
+                    <Paper sx={{ padding: 3, mt: 2 }}>
+                        <Typography variant="h6">
+                            <PersonIcon sx={{ marginRight: 1 }} />
+                            User Details
+                        </Typography>
+                        <Box sx={{ mt: 2 }}>
+                            {/* Show only Name and Account Type for Admins */}
+                            {loggedInUser?.isAdmin ? (
+                                <>
+                                    <Typography variant="body1">
+                                        Name: {loggedInUser?.firstName} {loggedInUser?.lastName}
+                                    </Typography>
+                                    <Typography variant="body1">Account Type: Admin</Typography>
+                                </>
+                            ) : (
+                                <>
+                                    <Typography variant="body1">
+                                        Name: {loggedInUser?.firstName} {loggedInUser?.lastName}
+                                    </Typography>
+                                    <Typography variant="body1">Student ID: {loggedInUser?.studentID}</Typography>
+                                    <Typography variant="body1">Program: {loggedInUser?.program}</Typography>
+                                    <Typography variant="body1">Department: {loggedInUser?.department}</Typography>
+                                    <Typography variant="body1">Account Type: Student</Typography>
+                                    <Typography variant="body1">
+                                        Enrollment Status: <span style={{ color: getStatusColor(status) }}>{status}</span>
+                                    </Typography>
+                                </>
+                            )}
+                        </Box>
+
+                        {status === "Enrolled" && !loggedInUser?.isAdmin && (
+                            <Box sx={{ mt: 2 }}>
+                                <Typography variant="h6">Courses Enrolled:</Typography>
+                                <TableContainer component={Paper}>
+                                    <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Code</TableCell>
+                                                <TableCell>Name</TableCell>
+                                                <TableCell>Days</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {loggedInUser.courses.map(course => (
+                                                <TableRow key={course.code}>
+                                                    <TableCell>{course.code}</TableCell>
+                                                    <TableCell>{course.name}</TableCell>
+                                                    <TableCell>{course.days}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </Box>
+                        )}
+
+                        {loggedInUser?.isAdmin && studentsData.length > 0 && (
+                            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2, height: "200px" }}>
+                                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "30%" }}>
+                                    <Typography variant="body1">Enrolled Students</Typography>
+                                    <Gauge
+                                        value={enrolledCount}
+                                        minvalue={0}
+                                        maxvalue={studentsData.length}
+                                        label={`Enrolled: ${enrolledCount}`}
+                                        color="#4CAF50" // Green color for enrolled students
+                                        sx={{ height: "100%" }} // Ensure Gauge takes full height
+                                    />
+                                </Box>
+
+                                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "30%" }}>
+                                    <Typography variant="body1">Total Students</Typography>
+                                    <Gauge
+                                        value={totalStudentsCount}
+                                        minvalue={0}
+                                        maxvalue={studentsData.length}
+                                        label={`Total Students: ${totalStudentsCount}`}
+                                        color="warning" // Warning color for total students
+                                        sx={{ height: "100%" }} // Ensure Gauge takes full height
+                                    />
+                                </Box>
+
+                                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "30%" }}>
+                                    <Typography variant="body1">Total Events Registered</Typography>
+                                    <Gauge
+                                        value={totalEventsRegistered}
+                                        minvalue={0}
+                                        maxvalue={totalEventsRegistered} // Ensure maxvalue is set appropriately
+                                        label={`Total Events Registered: ${totalEventsRegistered}`}
+                                        color="info" // Info color for total courses
+                                        sx={{ height: "100%" }} // Ensure Gauge takes full height
+                                    />
+                                </Box>
+                            </Box>
+                        )}
+                    </Paper>
+                </Grid>
+            </Container>
         </div>
-      );
+    );
 }
 
 export default Dashboard;
