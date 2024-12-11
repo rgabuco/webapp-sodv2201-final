@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import Navbar from "../components/navbar/Navbar";
 import ProfileMenu from "../components/profile-menu/ProfileMenu";
 import {
@@ -27,23 +28,13 @@ import {
 import axios from "axios";
 
 function AdmAddCourses() {
-    const [courseData, setCourseData] = useState({
-        code: "",
-        name: "",
-        description: "",
-        credits: "",
-        prerequisites: "",
-        term: "",
-        startDate: "",
-        endDate: "",
-        time: "",
-        days: "",
-        campus: "Calgary",
-        deliveryMode: "",
-        seatsAvailable: "40",
-        classSize: "40",
-    });
-
+    const {
+        control,
+        handleSubmit,
+        setValue,
+        watch,
+        formState: { errors },
+    } = useForm();
     const [program, setProgram] = useState(""); // Initialize with an empty string
     const [programs, setPrograms] = useState([]);
     const [openModal, setOpenModal] = useState(false);
@@ -67,14 +58,6 @@ function AdmAddCourses() {
         fetchPrograms();
     }, []);
 
-    const handleChange = e => {
-        const { name, value } = e.target;
-        setCourseData(prevData => ({
-            ...prevData,
-            [name]: value,
-        }));
-    };
-
     const handleDaysChange = e => {
         const { name, checked } = e.target;
         setTempDays(prevDays => {
@@ -84,7 +67,7 @@ function AdmAddCourses() {
     };
 
     const handleMenuOpen = event => {
-        setTempDays(courseData.days.split(", ").filter(Boolean)); // Split the days string into an array
+        setTempDays(watch("days").split(", ").filter(Boolean)); // Split the days string into an array
         setAnchorEl(event.currentTarget);
     };
 
@@ -93,10 +76,7 @@ function AdmAddCourses() {
     };
 
     const handleApplyDays = () => {
-        setCourseData(prevData => ({
-            ...prevData,
-            days: tempDays.join(", "), // Join the array into a comma-separated string
-        }));
+        setValue("days", tempDays.join(", ")); // Join the array into a comma-separated string
         handleMenuClose();
     };
 
@@ -110,48 +90,11 @@ function AdmAddCourses() {
 
     const handleApplyTime = () => {
         const formattedTime = `${startTime} - ${endTime}`;
-        setCourseData(prevData => ({
-            ...prevData,
-            time: formattedTime,
-        }));
+        setValue("time", formattedTime);
         handleTimeMenuClose();
     };
 
-    const isValidDate = dateString => {
-        const regex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateString.match(regex)) return false;
-
-        const date = new Date(dateString);
-        const timestamp = date.getTime();
-
-        if (typeof timestamp !== "number" || Number.isNaN(timestamp)) return false;
-
-        return dateString === date.toISOString().split("T")[0];
-    };
-
-    const handleSubmit = async e => {
-        e.preventDefault();
-
-        // Validate dates
-        if (!isValidDate(courseData.startDate) || !isValidDate(courseData.endDate)) {
-            setError("Please enter valid dates in the format YYYY-MM-DD for Start Date and End Date.");
-            return;
-        }
-
-        const startDate = new Date(courseData.startDate);
-        const endDate = new Date(courseData.endDate);
-
-        if (endDate <= startDate) {
-            setError("End Date must be after Start Date.");
-            return;
-        }
-
-        // Validate number fields
-        if (isNaN(courseData.credits) || isNaN(courseData.seatsAvailable) || isNaN(courseData.classSize)) {
-            setError("Credits, Seats Available, and Class Size must be valid numbers.");
-            return;
-        }
-
+    const onSubmit = async data => {
         try {
             const token = localStorage.getItem("token"); // Retrieve the token from local storage
             const config = {
@@ -167,11 +110,7 @@ function AdmAddCourses() {
                 return;
             }
 
-            const response = await axios.post(
-                `${process.env.REACT_APP_SERVER_URL}/api/v1/courses?programCode=${selectedProgram.code}`,
-                courseData,
-                config
-            );
+            const response = await axios.post(`${process.env.REACT_APP_SERVER_URL}/api/v1/courses?programCode=${selectedProgram.code}`, data, config);
 
             if (response.status === 201) {
                 setOpenModal(true);
@@ -199,87 +138,163 @@ function AdmAddCourses() {
                     }}
                 >
                     <CardContent>
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit(onSubmit)}>
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField label="Course Code" name="code" value={courseData.code} onChange={handleChange} fullWidth required />
+                                    <Controller
+                                        name="code"
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{
+                                            required: "Course code is required",
+                                            minLength: { value: 3, message: "Course code must be at least 3 characters long" },
+                                            maxLength: { value: 11, message: "Course code must be less than 11 characters long" },
+                                        }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Course Code"
+                                                fullWidth
+                                                error={!!errors.code}
+                                                helperText={errors.code ? errors.code.message : ""}
+                                            />
+                                        )}
+                                    />
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField label="Course Name" name="name" value={courseData.name} onChange={handleChange} fullWidth required />
+                                    <Controller
+                                        name="name"
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{
+                                            required: "Course name is required",
+                                            minLength: { value: 3, message: "Course name must be at least 3 characters long" },
+                                            maxLength: { value: 100, message: "Course name must be less than 100 characters long" },
+                                        }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Course Name"
+                                                fullWidth
+                                                error={!!errors.name}
+                                                helperText={errors.name ? errors.name.message : ""}
+                                            />
+                                        )}
+                                    />
                                 </Box>
                                 <Box sx={{ flex: "1 1 100%" }}>
-                                    <TextField
-                                        label="Description"
+                                    <Controller
                                         name="description"
-                                        value={courseData.description}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        required
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{
+                                            required: "Course description is required",
+                                            minLength: { value: 10, message: "Course description must be at least 10 characters long" },
+                                            maxLength: { value: 1000, message: "Course description must be less than 1000 characters long" },
+                                        }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Description"
+                                                fullWidth
+                                                error={!!errors.description}
+                                                helperText={errors.description ? errors.description.message : ""}
+                                            />
+                                        )}
                                     />
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <FormControl fullWidth required variant="outlined">
-                                        <InputLabel>Term</InputLabel>
-                                        <Select name="term" value={courseData.term} onChange={handleChange} label="Term">
-                                            <MenuItem value="Winter">Winter</MenuItem>
-                                            <MenuItem value="Spring">Spring</MenuItem>
-                                            <MenuItem value="Summer">Summer</MenuItem>
-                                            <MenuItem value="Fall">Fall</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                    <Controller
+                                        name="term"
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{ required: "Term is required" }}
+                                        render={({ field }) => (
+                                            <FormControl fullWidth error={!!errors.term}>
+                                                <InputLabel>Term</InputLabel>
+                                                <Select {...field} label="Term">
+                                                    <MenuItem value="Winter">Winter</MenuItem>
+                                                    <MenuItem value="Spring">Spring</MenuItem>
+                                                    <MenuItem value="Summer">Summer</MenuItem>
+                                                    <MenuItem value="Fall">Fall</MenuItem>
+                                                </Select>
+                                                {errors.term && <Typography color="error">{errors.term.message}</Typography>}
+                                            </FormControl>
+                                        )}
+                                    />
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField label="Campus" name="campus" value={courseData.campus} onChange={handleChange} fullWidth required />
+                                    <Controller
+                                        name="campus"
+                                        control={control}
+                                        defaultValue="Calgary"
+                                        rules={{ required: "Campus is required" }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Campus"
+                                                fullWidth
+                                                error={!!errors.campus}
+                                                helperText={errors.campus ? errors.campus.message : ""}
+                                            />
+                                        )}
+                                    />
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField
-                                        label="Start Date"
-                                        type="date"
+                                    <Controller
                                         name="startDate"
-                                        value={courseData.startDate}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        required
-                                        InputLabelProps={{
-                                            shrink: true,
-                                            sx: {
-                                                backgroundColor: "white",
-                                                paddingRight: "4px",
-                                                paddingLeft: "4px",
-                                            },
-                                        }}
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{ required: "Start date is required" }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Start Date"
+                                                type="date"
+                                                fullWidth
+                                                InputLabelProps={{ shrink: true }}
+                                                error={!!errors.startDate}
+                                                helperText={errors.startDate ? errors.startDate.message : ""}
+                                            />
+                                        )}
                                     />
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField
-                                        label="End Date"
-                                        type="date"
+                                    <Controller
                                         name="endDate"
-                                        value={courseData.endDate}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        required
-                                        InputLabelProps={{
-                                            shrink: true,
-                                            sx: {
-                                                backgroundColor: "white",
-                                                paddingRight: "4px",
-                                                paddingLeft: "4px",
-                                            },
-                                        }}
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{ required: "End date is required" }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="End Date"
+                                                type="date"
+                                                fullWidth
+                                                InputLabelProps={{ shrink: true }}
+                                                error={!!errors.endDate}
+                                                helperText={errors.endDate ? errors.endDate.message : ""}
+                                            />
+                                        )}
                                     />
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField
-                                        label="Time"
+                                    <Controller
                                         name="time"
-                                        value={courseData.time}
-                                        onClick={handleTimeMenuOpen}
-                                        fullWidth
-                                        required
-                                        InputProps={{
-                                            readOnly: true,
-                                        }}
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{ required: "Time is required" }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Time"
+                                                fullWidth
+                                                onClick={handleTimeMenuOpen}
+                                                InputProps={{ readOnly: true }}
+                                                error={!!errors.time}
+                                                helperText={errors.time ? errors.time.message : ""}
+                                            />
+                                        )}
                                     />
                                     <Menu anchorEl={timeAnchorEl} open={Boolean(timeAnchorEl)} onClose={handleTimeMenuClose}>
                                         <Box sx={{ p: 2 }}>
@@ -289,9 +304,7 @@ function AdmAddCourses() {
                                                     label="Start Time"
                                                     value={startTime}
                                                     onChange={e => setStartTime(e.target.value)}
-                                                    InputLabelProps={{
-                                                        shrink: true,
-                                                    }}
+                                                    InputLabelProps={{ shrink: true }}
                                                 >
                                                     {[
                                                         "8:00 AM",
@@ -326,9 +339,7 @@ function AdmAddCourses() {
                                                     label="End Time"
                                                     value={endTime}
                                                     onChange={e => setEndTime(e.target.value)}
-                                                    InputLabelProps={{
-                                                        shrink: true,
-                                                    }}
+                                                    InputLabelProps={{ shrink: true }}
                                                 >
                                                     {[
                                                         "8:00 AM",
@@ -364,16 +375,22 @@ function AdmAddCourses() {
                                     </Menu>
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField
-                                        label="Days"
+                                    <Controller
                                         name="days"
-                                        value={courseData.days}
-                                        onClick={handleMenuOpen}
-                                        fullWidth
-                                        required
-                                        InputProps={{
-                                            readOnly: true,
-                                        }}
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{ required: "Days are required" }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Days"
+                                                fullWidth
+                                                onClick={handleMenuOpen}
+                                                InputProps={{ readOnly: true }}
+                                                error={!!errors.days}
+                                                helperText={errors.days ? errors.days.message : ""}
+                                            />
+                                        )}
                                     />
                                     <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                                         <FormControl component="fieldset" sx={{ p: 2 }}>
@@ -394,55 +411,101 @@ function AdmAddCourses() {
                                     </Menu>
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <FormControl fullWidth required variant="outlined">
-                                        <InputLabel>Delivery Mode</InputLabel>
-                                        <Select name="deliveryMode" value={courseData.deliveryMode} onChange={handleChange} label="Delivery Mode">
-                                            <MenuItem value="Face to Face">Face to Face</MenuItem>
-                                            <MenuItem value="Online Synchronous">Online Synchronous</MenuItem>
-                                            <MenuItem value="Online Asynchronous">Online Asynchronous</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                    <Controller
+                                        name="deliveryMode"
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{ required: "Delivery mode is required" }}
+                                        render={({ field }) => (
+                                            <FormControl fullWidth error={!!errors.deliveryMode}>
+                                                <InputLabel>Delivery Mode</InputLabel>
+                                                <Select {...field} label="Delivery Mode">
+                                                    <MenuItem value="Face to Face">Face to Face</MenuItem>
+                                                    <MenuItem value="Online Synchronous">Online Synchronous</MenuItem>
+                                                    <MenuItem value="Online Asynchronous">Online Asynchronous</MenuItem>
+                                                </Select>
+                                                {errors.deliveryMode && <Typography color="error">{errors.deliveryMode.message}</Typography>}
+                                            </FormControl>
+                                        )}
+                                    />
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField
-                                        type="number"
-                                        label="Credits"
+                                    <Controller
                                         name="credits"
-                                        value={courseData.credits}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        required
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{
+                                            required: "Course credits are required",
+                                            min: { value: 1, message: "Credits must be at least 1" },
+                                            max: { value: 10, message: "Credits must be less than or equal to 10" },
+                                        }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                type="number"
+                                                label="Credits"
+                                                fullWidth
+                                                error={!!errors.credits}
+                                                helperText={errors.credits ? errors.credits.message : ""}
+                                            />
+                                        )}
                                     />
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField
-                                        type="number"
-                                        label="Seats Available"
+                                    <Controller
                                         name="seatsAvailable"
-                                        value={courseData.seatsAvailable}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        required
+                                        control={control}
+                                        defaultValue="40"
+                                        rules={{ required: "Seats available are required" }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                type="number"
+                                                label="Seats Available"
+                                                fullWidth
+                                                error={!!errors.seatsAvailable}
+                                                helperText={errors.seatsAvailable ? errors.seatsAvailable.message : ""}
+                                            />
+                                        )}
                                     />
                                 </Box>
                                 <Box sx={{ flex: "1 1 45%" }}>
-                                    <TextField
-                                        type="number"
-                                        label="Class Size"
+                                    <Controller
                                         name="classSize"
-                                        value={courseData.classSize}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        required
+                                        control={control}
+                                        defaultValue="40"
+                                        rules={{
+                                            required: "Class size is required",
+                                            min: { value: 10, message: "Class size must be at least 10" },
+                                            max: { value: 50, message: "Class size must be less than or equal to 50" },
+                                        }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                type="number"
+                                                label="Class Size"
+                                                fullWidth
+                                                error={!!errors.classSize}
+                                                helperText={errors.classSize ? errors.classSize.message : ""}
+                                            />
+                                        )}
                                     />
                                 </Box>
                                 <Box sx={{ flex: "1 1 100%" }}>
-                                    <TextField
-                                        label="Prerequisites"
+                                    <Controller
                                         name="prerequisites"
-                                        value={courseData.prerequisites}
-                                        onChange={handleChange}
-                                        fullWidth
+                                        control={control}
+                                        defaultValue=""
+                                        rules={{ maxLength: { value: 100, message: "Prerequisites must be less than 100 characters long" } }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                label="Prerequisites"
+                                                fullWidth
+                                                error={!!errors.prerequisites}
+                                                helperText={errors.prerequisites ? errors.prerequisites.message : ""}
+                                            />
+                                        )}
                                     />
                                 </Box>
                                 <Box sx={{ flex: "1 1 100%" }}>
