@@ -3,6 +3,7 @@ const path = require('path');
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
 const fs = require('fs');
+const fallbackPhoto = path.join(__dirname, '../uploads/default-profile-photo.png'); //
 
 const router = express.Router();
 
@@ -37,6 +38,30 @@ router.post('/:userId/profile-photo', (req, res, next) => {
     next();
   }, userController.uploadProfilePhoto);
   
+// Serve profile photos as static files
+router.get('/profile-photo/:userId', (req, res) => {
+    const userId = req.params.userId;
+
+    User.findById(userId, (err, user) => {
+        if (err || !user) {
+            return res.status(404).send('User not found');
+        }
+
+        // Check if the user has a profile photo stored in the DB
+        if (user.profilePhoto) {
+            const photoPath = path.join(__dirname, '../uploads', user.profilePhoto.split('/uploads/')[1]);
+
+            // Check if the file exists
+            if (fs.existsSync(photoPath)) {
+                return res.sendFile(photoPath);  // Serve the profile photo if it exists
+            }
+        }
+
+        // If no profile photo or file doesn't exist, send fallback photo
+        return res.sendFile(fallbackPhoto);  // Return fallback profile photo
+    });
+});
+
 
 
 
