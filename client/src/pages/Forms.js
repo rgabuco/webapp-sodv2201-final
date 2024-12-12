@@ -174,9 +174,9 @@ function Forms() {
                     >
                         <TableHead
                             sx={{
-                                backgroundColor: "#f5f5f5",
+                                
                                 color: "#2B3C5E",
-                                display: { xs: "none", sm: "table-header-group" },
+                                display: { xs: "none", sm: "table-header-group" },backgroundColor: "#ffffff"
                             }}
                         >
                             <TableRow>

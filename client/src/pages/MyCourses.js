@@ -141,7 +141,9 @@ function MyCourses() {
                                     variant="outlined"
                                     sx={{
                                         marginBottom: "16px",
-                                        backgroundColor: "#f5f5f5",
+                                        backgroundColor: "#ffffff", 
+                                        border: "1px solid rgba(0, 0, 0, 0.12)", 
+                                        boxShadow: 3, 
                                         transition: "transform 0.3s ease, box-shadow 0.3s ease",
                                         "&:hover": {
                                             transform: "translateY(-10px)",
@@ -158,8 +160,8 @@ function MyCourses() {
                                                 <>
                                                     <Grid container>
                                                         <Grid item xs={4}>
-                                                            <Typography variant="body1">
-                                                                <strong>Credits:</strong>
+                                                            <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                                Credits:
                                                             </Typography>
                                                         </Grid>
                                                         <Grid item xs={8}>
@@ -167,8 +169,8 @@ function MyCourses() {
                                                         </Grid>
 
                                                         <Grid item xs={4}>
-                                                            <Typography variant="body1">
-                                                                <strong>Term:</strong>
+                                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                Term:
                                                             </Typography>
                                                         </Grid>
                                                         <Grid item xs={8}>
@@ -176,8 +178,8 @@ function MyCourses() {
                                                         </Grid>
 
                                                         <Grid item xs={4}>
-                                                            <Typography variant="body1">
-                                                                <strong>Dates:</strong>
+                                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                Dates:
                                                             </Typography>
                                                         </Grid>
                                                         <Grid item xs={8}>
@@ -187,8 +189,8 @@ function MyCourses() {
                                                         </Grid>
 
                                                         <Grid item xs={4}>
-                                                            <Typography variant="body1">
-                                                                <strong>Time:</strong>
+                                                            <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                                Time:
                                                             </Typography>
                                                         </Grid>
                                                         <Grid item xs={8}>
@@ -198,8 +200,8 @@ function MyCourses() {
                                                         </Grid>
 
                                                         <Grid item xs={4}>
-                                                            <Typography variant="body1">
-                                                                <strong>Campus:</strong>
+                                                            <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                                Campus:
                                                             </Typography>
                                                         </Grid>
                                                         <Grid item xs={8}>
@@ -207,8 +209,8 @@ function MyCourses() {
                                                         </Grid>
 
                                                         <Grid item xs={4}>
-                                                            <Typography variant="body1">
-                                                                <strong>Delivery Mode:</strong>
+                                                            <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                                Delivery Mode:
                                                             </Typography>
                                                         </Grid>
                                                         <Grid item xs={8}>

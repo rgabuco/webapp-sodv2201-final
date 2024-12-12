@@ -121,8 +121,10 @@ function Courses() {
                                             <Grid item xs={12} key={index}>
                                                 <Card
                                                     sx={{
-                                                        backgroundColor: "#f5f5f5",
-                                                        width: "100%",
+                                                        backgroundColor: "#ffffff", 
+                                                        border: "1px solid rgba(0, 0, 0, 0.12)", 
+                                                        boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                                                        
                                                         transition: "transform 0.3s ease",
                                                         "&:hover": { transform: "translateY(-10px)" },
                                                     }}
@@ -133,7 +135,7 @@ function Courses() {
                                                         </Typography>
                                                         <Typography
                                                             variant="body1"
-                                                            sx={{ color: "#34405E", fontWeight: "bold", marginBottom: "8px" }}
+                                                            sx={{ color: "#34405E", fontWeight: "500", marginBottom: "8px" }}
                                                         >
                                                             Code: {course.code}
                                                         </Typography>
@@ -142,10 +144,10 @@ function Courses() {
                                                         </Typography>
                                                         <Box sx={{ marginTop: 2 }}>
                                                             <Typography variant="body1">
-                                                                <strong>Credits:</strong> {course.credits}
+                                                            <span style={{ fontWeight: 500 }}>Credits: {course.credits}</span>
                                                             </Typography>
                                                             <Typography variant="body1">
-                                                                <strong>Prerequisites:</strong> {course.prerequisites}
+                                                            <span style={{ fontWeight: 500 }}>Prerequisites: {course.prerequisites}</span>
                                                             </Typography>
                                                         </Box>
                                                     </CardContent>

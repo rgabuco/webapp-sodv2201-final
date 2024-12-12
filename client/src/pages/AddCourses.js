@@ -199,7 +199,8 @@ function AddCourses() {
                                 <Grid item xs={12} sm={6} key={index}>
                                     <Card
                                         sx={{
-                                            backgroundColor: "#f5f5f5",
+                                            backgroundColor: "#ffffff", 
+                                            boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.2)",
                                             transition: "transform 0.3s ease",
                                             "&:hover": { transform: "translateY(-10px)", boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)" },
                                             border: isCourseAdded ? "2px solid 0px 4px 20px rgba(0, 0, 0, 0.1)" : "none",
@@ -213,32 +214,32 @@ function AddCourses() {
                                             </Box>
                                             <Grid container>
                                                 <Grid item xs={4}>
-                                                    <Typography variant="body1">
-                                                        <strong>Credits:</strong>
+                                                    <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                        Credits:
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={8}>
                                                     <Typography variant="body1">{course.credits}</Typography>
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    <Typography variant="body1">
-                                                        <strong>Prerequisites:</strong>
+                                                    <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                        Prerequisites:
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={8}>
                                                     <Typography variant="body1">{course.prerequisites}</Typography>
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    <Typography variant="body1">
-                                                        <strong>Term:</strong>
+                                                    <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                        Term:
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={8}>
                                                     <Typography variant="body1">{course.term}</Typography>
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    <Typography variant="body1">
-                                                        <strong>Dates:</strong>
+                                                    <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                        Dates:
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={8}>
@@ -247,8 +248,8 @@ function AddCourses() {
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    <Typography variant="body1">
-                                                        <strong>Time:</strong>
+                                                    <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                        Time:
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={8}>
@@ -257,24 +258,24 @@ function AddCourses() {
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    <Typography variant="body1">
-                                                        <strong>Campus:</strong>
+                                                    <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                        Campus:
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={8}>
                                                     <Typography variant="body1">{course.campus}</Typography>
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    <Typography variant="body1">
-                                                        <strong>Delivery Mode:</strong>
+                                                    <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                        Delivery Mode:
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={8}>
                                                     <Typography variant="body1">{course.deliveryMode}</Typography>
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    <Typography variant="body1">
-                                                        <strong>Seats Available:</strong>
+                                                    <Typography variant="body1"sx={{ fontWeight: 500 }}>
+                                                       Seats Available:
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={8}>
