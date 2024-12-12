@@ -7,6 +7,7 @@ import {
     Button,
     Chip,
     IconButton,
+    Modal,
     TextField,
     Table,
     TableBody,
@@ -15,6 +16,7 @@ import {
     TableHead,
     TableRow,
     Box,
+    Dialog, DialogTitle, DialogContent, DialogActions
 } from "@mui/material";
 import { Calendar } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -39,6 +41,8 @@ function Dashboard() {
     const [eventDate, setEventDate] = useState(dayjs());
     const [eventName, setEventName] = useState("");
     const [studentsData, setStudentsData] = useState([]);
+    const [openModal, setOpenModal] = useState(false); // To control modal visibility
+    const [selectedEvent, setSelectedEvent] = useState(null); // To store the event details
     const [, setErrorMessage] = useState("");
 
     useEffect(() => {
@@ -260,6 +264,12 @@ function Dashboard() {
         }
     };
 
+        // The function you need to define
+        const handleEventClick = (event) => {
+          setSelectedEvent(event); // Set the selected event
+          setOpenModal(true); // Open the modal
+      };
+
     const handleAddEvent = async () => {
         try {
             const token = localStorage.getItem("token");
@@ -399,111 +409,174 @@ function Dashboard() {
                         </Paper>
                     </Grid>
 
-                    {/* Upcoming Events Section */}
-                    <Grid item xs={12} sm={6}>
-                        <Paper
-                            elevation={3}
-                            sx={{
-                                padding: 0.5,
-                                maxWidth: 650,
-                                width: "100%",
-                                height: "450px", // Allow the paper to expand vertically if needed
-                                display: "flex",
-                                flexDirection: "column",
-                            }}
-                        >
-                            <Typography variant="h6" sx={{ mb: 1, fontSize: "0.8rem", textAlign: "center" }}>
-                                Upcoming Events
-                            </Typography>
+{/* Upcoming Events Section */}
+<Grid item xs={12} sm={6}>
+    <Paper
+        elevation={3}
+        sx={{
+            padding: 0.5,
+            maxWidth: 650,
+            width: "100%",
+            height: "450px", // Allow the paper to expand vertically if needed
+            display: "flex",
+            flexDirection: "column",
+        }}
+    >
+        <Typography variant="h6" sx={{ mb: 1, fontSize: "0.8rem", textAlign: "center" }}>
+            Upcoming Events
+        </Typography>
 
-                            {/* Scrollable container for events */}
-                            <Box
-                                sx={{
-                                    flexGrow: 1,
-                                    overflowY: "auto", // Enable vertical scrolling
-                                    maxHeight: loggedInUser?.isAdmin ? "250px" : "calc(100% - 70px)", // If Admin, limit height, else take available space
-                                    width: "100%", // Ensure Box takes full width
-                                }}
-                            >
-                                {upcomingEvents.length > 0 ? (
-                                    <Grid container spacing={1} sx={{ flexWrap: "wrap", overflow: "hidden" }}>
-                                        {upcomingEvents.map(event => {
-                                            if (!event) {
-                                                console.error("Undefined event:", event); // Log undefined events
-                                                return null; // Skip undefined events
-                                            }
-                                            // Format the event date using dayjs
-                                            const formattedDate = dayjs(event.eventDate).format("MM-DD-YYYY [at] HH:mm");
-                                            return (
-                                                <Grid item xs={12} sm={6} md={4} key={event._id}>
-                                                    <Chip
-                                                        label={
-                                                            <Box>
-                                                                <Typography variant="body2" sx={{ fontSize: "0.75rem" }}>
-                                                                    {event.eventName}
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ fontSize: "0.6rem", color: "text.secondary" }}>
-                                                                    {formattedDate}
-                                                                </Typography>
-                                                            </Box>
+        {/* Scrollable container for events */}
+        <Box
+            sx={{
+                flexGrow: 1,
+                overflowY: "auto", // Enable vertical scrolling
+                maxHeight: loggedInUser?.isAdmin ? "250px" : "calc(100% - 70px)", // If Admin, limit height, else take available space
+                width: "100%", // Ensure Box takes full width
+            }}
+        >
+            {upcomingEvents.length > 0 ? (
+                <Grid container spacing={1} sx={{ flexWrap: "wrap", overflow: "hidden" }}>
+                    {upcomingEvents.map(event => {
+                        if (!event) {
+                            console.error("Undefined event:", event); // Log undefined events
+                            return null; // Skip undefined events
+                        }
+                        // Format the event date using dayjs
+                        const formattedDate = dayjs(event.eventDate).format("MM-DD-YYYY [at] HH:mm");
+
+                        // Calculate speed for scrolling animation dynamically
+                        const calculateSpeed = textLength => Math.max(textLength / 5, 10);
+
+                        return (
+                            <Grid item xs={12} sm={6} md={4} key={event._id}>
+                                <Chip
+                                    label={
+                                        <Box>
+                                            {/* Scrolling text for the event name */}
+                                            <Box
+                                                sx={{
+                                                    position: "relative",
+                                                    overflow: "hidden",
+                                                    whiteSpace: "nowrap",
+                                                    width: "100%",
+                                                    height: "1.2rem",
+                                                }}
+                                            >
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{
+                                                        fontSize: "0.75rem",
+                                                        display: "inline-block",
+                                                        position: "absolute",
+                                                        whiteSpace: "nowrap",
+                                                        animation: `scroll ${calculateSpeed(event.eventName.length)}s linear infinite`,
+                                                    }}
+                                                >
+                                                    {event.eventName}
+                                                </Typography>
+                                                <style>
+                                                    {`
+                                                    @keyframes scroll {
+                                                        0% {
+                                                            transform: translateX(100%);
                                                         }
-                                                        variant="outlined"
-                                                        color="primary"
-                                                        sx={{
-                                                            fontSize: "0.7rem",
-                                                            borderRadius: "16px",
-                                                            maxWidth: "300px", // Control the width of the chip
-                                                            width: "100%", // Ensure chip uses full width of its container
-                                                            marginBottom: "8px", // Add space between rows of chips
-                                                            marginRight: "8px", // Add space between chips horizontally
-                                                        }}
-                                                        deleteIcon={
-                                                            loggedInUser?.isAdmin ? (
-                                                                <IconButton size="small" onClick={() => handleDeleteEvent(event._id)}>
-                                                                    <DeleteIcon fontSize="small" />
-                                                                </IconButton>
-                                                            ) : null // Hide delete icon for non-admin users
+                                                        100% {
+                                                            transform: translateX(-100%);
                                                         }
-                                                        onDelete={loggedInUser?.isAdmin ? () => handleDeleteEvent(event._id) : undefined} // Disable delete action for non-admin
-                                                        onClick={() => loggedInUser?.isAdmin && handleEditEvent(event)}
-                                                    />
-                                                </Grid>
-                                            );
-                                        })}
-                                    </Grid>
-                                ) : (
-                                    <Typography variant="body2" sx={{ fontSize: "1rem", textAlign: "center" }}>
-                                        No upcoming events.
-                                    </Typography>
-                                )}
-                            </Box>
+                                                    }
+                                                    `}
+                                                </style>
+                                            </Box>
+                                            {/* Static formatted date */}
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ fontSize: "0.6rem", color: "text.secondary" }}
+                                            >
+                                                {formattedDate}
+                                            </Typography>
+                                        </Box>
+                                    }
+                                    variant="outlined"
+                                    color="primary"
+                                    sx={{
+                                        fontSize: "0.5rem",
+                                        borderRadius: "16px",
+                                        maxWidth: "400px", // Control the width of the chip
+                                        width: "100%", // Ensure chip uses full width of its container
+                                        marginBottom: "8px", // Add space between rows of chips
+                                        marginRight: "8px", // Add space between chips horizontally
+                                    }}
+                                    onClick={() => {
+                                        if (!loggedInUser?.isAdmin) {
+                                            handleEventClick(event); // Non-admin users trigger the modal
+                                        } else {
+                                            handleEditEvent(event); // Admin users trigger the edit action
+                                        }
+                                    }}
+                                    deleteIcon={
+                                        loggedInUser?.isAdmin ? (
+                                            <IconButton size="small" onClick={() => handleDeleteEvent(event._id)}>
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        ) : null // Hide delete icon for non-admin users
+                                    }
+                                    onDelete={loggedInUser?.isAdmin ? () => handleDeleteEvent(event._id) : undefined} // Disable delete action for non-admin
+                                />
+                            </Grid>
+                        );
+                    })}
+                </Grid>
+            ) : (
+                <Typography variant="body2" sx={{ fontSize: "1rem", textAlign: "center" }}>
+                    No upcoming events.
+                </Typography>
+            )}
+        </Box>
 
-                            {/* Add/Edit Event Form for Admin */}
-                            {loggedInUser?.isAdmin && (
-                                <>
-                                    <Typography variant="h6" sx={{ mb: 1, mt: 2 }}>
-                                        {editingEvent ? "Edit Event" : "Add Event"}
-                                    </Typography>
+        {/* Add/Edit Event Form for Admin */}
+        {loggedInUser?.isAdmin && (
+            <>
+                <Typography variant="h6" sx={{ mb: 1, mt: 2 }}>
+                    {editingEvent ? "Edit Event" : "Add Event"}
+                </Typography>
 
-                                    <DateTimePicker
-                                        label="Event Date"
-                                        value={eventDate}
-                                        onChange={setEventDate}
-                                        textField={<TextField fullWidth />}
-                                    />
-                                    <TextField
-                                        label="Event Name"
-                                        value={eventName}
-                                        onChange={e => setEventName(e.target.value)}
-                                        sx={{ mt: 2, width: "100%" }}
-                                    />
-                                    <Button variant="contained" onClick={editingEvent ? handleSaveEvent : handleAddEvent} sx={{ mt: 1 }}>
-                                        {editingEvent ? "Save Event" : "Add Event"}
-                                    </Button>
-                                </>
-                            )}
-                        </Paper>
-                    </Grid>
+                <DateTimePicker
+                    label="Event Date"
+                    value={eventDate}
+                    onChange={setEventDate}
+                    textField={<TextField fullWidth />}
+                />
+                <TextField
+                    label="Event Name"
+                    value={eventName}
+                    onChange={e => setEventName(e.target.value)}
+                    sx={{ mt: 2, width: "100%" }}
+                />
+                <Button variant="contained" onClick={editingEvent ? handleSaveEvent : handleAddEvent} sx={{ mt: 1 }}>
+                    {editingEvent ? "Save Event" : "Add Event"}
+                </Button>
+            </>
+        )}
+    </Paper>
+</Grid>
+
+{/* Modal for event details */}
+<Dialog open={openModal} onClose={() => setOpenModal(false)}>
+    <DialogTitle>{selectedEvent?.eventName}</DialogTitle>
+    <DialogContent>
+        <Typography variant="body1" sx={{ mb: 2 }}>
+            {selectedEvent?.eventDescription} {/* Display event description */}
+        </Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            Date: {dayjs(selectedEvent?.eventDate).format("MM-DD-YYYY [at] HH:mm")}
+        </Typography>
+    </DialogContent>
+    <DialogActions>
+        <Button onClick={() => setOpenModal(false)}>Close</Button>
+    </DialogActions>
+</Dialog>
+
                 </Grid>
 
                 {/* User Details Section */}
