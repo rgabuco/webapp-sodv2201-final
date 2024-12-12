@@ -141,7 +141,9 @@ function MyCourses() {
                                     variant="outlined"
                                     sx={{
                                         marginBottom: "16px",
-                                        backgroundColor: "#f5f5f5",
+                                        backgroundColor: "#ffffff", 
+                                        border: "1px solid rgba(0, 0, 0, 0.12)", 
+                                        boxShadow: 3, 
                                         transition: "transform 0.3s ease, box-shadow 0.3s ease",
                                         "&:hover": {
                                             transform: "translateY(-10px)",

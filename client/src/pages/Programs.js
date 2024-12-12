@@ -75,7 +75,9 @@ const Programs = () => {
 
                                             <Card
                                                 sx={{
-                                                    backgroundColor: "#f5f5f5",
+                                                    backgroundColor: "#ffffff", 
+                                                    border: "1px solid rgba(0, 0, 0, 0.12)", 
+                                                    boxShadow: 3, 
                                                     transition: "transform 0.3s ease",
                                                     "&:hover": { transform: "translateY(-10px)", boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)" },
                                                 }}

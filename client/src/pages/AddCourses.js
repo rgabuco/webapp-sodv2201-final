@@ -199,7 +199,8 @@ function AddCourses() {
                                 <Grid item xs={12} sm={6} key={index}>
                                     <Card
                                         sx={{
-                                            backgroundColor: "#f5f5f5",
+                                            backgroundColor: "#ffffff", 
+                                            boxShadow: 3, 
                                             transition: "transform 0.3s ease",
                                             "&:hover": { transform: "translateY(-10px)", boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)" },
                                             border: isCourseAdded ? "2px solid 0px 4px 20px rgba(0, 0, 0, 0.1)" : "none",

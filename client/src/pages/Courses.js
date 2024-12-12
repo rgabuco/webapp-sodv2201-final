@@ -121,8 +121,10 @@ function Courses() {
                                             <Grid item xs={12} key={index}>
                                                 <Card
                                                     sx={{
-                                                        backgroundColor: "#f5f5f5",
-                                                        width: "100%",
+                                                        backgroundColor: "#ffffff", 
+                                                        border: "1px solid rgba(0, 0, 0, 0.12)", 
+                                                        boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                                                        
                                                         transition: "transform 0.3s ease",
                                                         "&:hover": { transform: "translateY(-10px)" },
                                                     }}
