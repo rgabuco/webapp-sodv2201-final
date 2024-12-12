@@ -43,7 +43,7 @@ function StudentList() {
                 const token = localStorage.getItem("token");
                 const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users`, {
                     headers: {
-                        Authorization: `Bearer ${token}`, // Include the token in the request header
+                        Authorization: `Bearer ${token}`,
                     },
                 });
 
@@ -59,23 +59,6 @@ function StudentList() {
         fetchUsers();
     }, []);
 
-    const handleDelete = async _id => {
-        try {
-            const token = localStorage.getItem("token");
-            await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${_id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`, // Include the token in the request header
-                },
-            });
-
-            // If the user is successfully deleted from the database, update local state
-            const updatedUsers = users.filter(user => user._id !== _id);
-            setUsers(updatedUsers);
-        } catch (error) {
-            console.error("Error deleting user:", error);
-        }
-    };
-
     // Filter users based on search and filter criteria
     const filteredUsers = users.filter(student => {
         return (
@@ -86,9 +69,35 @@ function StudentList() {
         );
     });
 
-    // Calculate the paginated users
-    const paginatedUsers = filteredUsers.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+    // Calculate the total pages based on filtered data
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+    // Paginate filtered users
+    const paginatedUsers = filteredUsers.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
+    // Ensure pagination does not go out of bounds
+    useEffect(() => {
+        if (currentPage >= totalPages && totalPages > 0) {
+            setCurrentPage(totalPages - 1); // If the current page exceeds total pages, reset to the last page
+        }
+    }, [filteredUsers, currentPage, totalPages]);
+
+    const handleDelete = async _id => {
+        try {
+            const token = localStorage.getItem("token");
+            await axios.delete(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${_id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            // If the user is successfully deleted from the database, update local state
+            const updatedUsers = users.filter(user => user._id !== _id);
+            setUsers(updatedUsers);
+        } catch (error) {
+            console.error("Error deleting user:", error);
+        }
+    };
 
     const handleIconClick = iconName => {
         setClickedIcons(prevState => ({ ...prevState, [iconName]: !prevState[iconName] }));
