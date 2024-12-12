@@ -88,13 +88,13 @@ const Programs = () => {
 
                                                         <Grid item xs={12}>
                                                             {/*Full width for program name and code on all screen sizes (12 columns).*/}
-                                                            <Typography variant="h5" sx={{ textAlign: "left", fontWeight: "bold", color: "#34405E" }}>
+                                                            <Typography variant="h5" sx={{ textAlign: "left", fontWeight: "500", color: "#34405E" }}>
                                                                 {program.name}
                                                             </Typography>
 
                                                             <Typography
                                                                 variant="body1"
-                                                                sx={{ color: "#34405E", fontWeight: "bold", marginBottom: "8px" }}
+                                                                sx={{ color: "#34405E", fontWeight: "500", marginBottom: "8px" }}
                                                             >
                                                                 Code: {program.code}
                                                             </Typography>
@@ -118,25 +118,29 @@ const Programs = () => {
 
                                                                 <CalendarTodayIcon sx={{ marginRight: 1, color: "#1976d2" }} />
                                                                 <Typography variant="body1" sx={{ color: "#34405E" }}>
-                                                                    <strong>Start Date:</strong> {program.startDate.split("T")[0]}
+                                                                    <span style={{ fontWeight: 500 }}>Start Date:</span> {program.startDate.split("T")[0]}
+
                                                                 </Typography>
                                                             </Box>
 
                                                             <Box sx={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
                                                                 <CalendarTodayIcon sx={{ marginRight: 1, color: "#1976d2" }} />
                                                                 <Typography variant="body1" sx={{ color: "#34405E" }}>
-                                                                    <strong>End Date:</strong> {program.endDate.split("T")[0]}
+                                                                    <span style={{ fontWeight: 500 }}>End Date:</span> {program.endDate.split("T")[0]}
+
                                                                 </Typography>
                                                             </Box>
 
                                                             <Typography variant="body1" sx={{ color: "#34405E", marginBottom: 2 }}>
-                                                                <strong>Term:</strong> {program.term}
+                                                                <span style={{ fontWeight: 500 }}>Term:</span> {program.term}
+
                                                             </Typography>
 
                                                             <Box sx={{ display: "flex", alignItems: "center" }}>
                                                                 <AttachMoneyIcon sx={{ marginRight: 1, color: "#43a047" }} />
                                                                 <Typography variant="body1" sx={{ color: "#34405E" }}>
-                                                                    <strong>Fees:</strong> {program.fees}
+                                                                    <span style={{ fontWeight: 500 }}>Fees:</span> ${program.fees}
+
                                                                 </Typography>
                                                             </Box>
                                                         </Grid>
