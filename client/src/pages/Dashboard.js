@@ -76,7 +76,7 @@ function Dashboard() {
                             return;
                         }
 
-                        console.log("Token from localStorage:", token);
+                        //console.log("Token from localStorage:", token);
 
                         if (!token) {
                             console.error("No token found. Please log in.");
@@ -135,7 +135,7 @@ function Dashboard() {
 
                         // Fetch events from the database
                         const eventsResponse = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/events`);
-                        console.log("Events from the server:", eventsResponse.data);
+                        //console.log("Events from the server:", eventsResponse.data);
                         if (!eventsResponse.data.data?.events) {
                             console.log("No events found.");
                             setUpcomingEvents([]);

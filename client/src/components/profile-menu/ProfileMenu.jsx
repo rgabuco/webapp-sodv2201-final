@@ -46,7 +46,7 @@ const ProfileMenu = ({ onLogout = () => {} }) => {
             try {
                 const decodedToken = jwtDecode(token);
                 const userId = decodedToken.id;
-                console.log("User ID:", userId); // Log to confirm userId is correct
+                //console.log("User ID:", userId); // Log to confirm userId is correct
                 fetchProfilePhoto(userId);
             } catch (error) {
                 console.error("Error decoding the token:", error);
@@ -84,13 +84,13 @@ const ProfileMenu = ({ onLogout = () => {} }) => {
                 },
             });
     
-            console.log("Profile Photo Response Data:", JSON.stringify(response.data, null, 2)); // Logs the response for inspection
+            //console.log("Profile Photo Response Data:", JSON.stringify(response.data, null, 2)); // Logs the response for inspection
     
             // Access the profile photo URL
             const profilePhoto = response.data.data.user?.profilePhoto;
     
             if (profilePhoto) {
-                console.log("Profile Photo Path:", profilePhoto); // Log the photo path
+                //console.log("Profile Photo Path:", profilePhoto); // Log the photo path
                 setProfilePhoto(profilePhoto);  // Set the profile photo
             } else {
                 setProfilePhoto(fallbackProfilePhoto); // Fallback if no photo is found
