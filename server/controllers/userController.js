@@ -189,6 +189,45 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     });
 });
 
+// Check if a username already exists
+exports.checkUsername = catchAsync(async (req, res, next) => {
+    const { username } = req.params;
+    const user = await User.findOne({ username });
+
+    if (user) {
+        return res.status(200).json({
+            status: 'success',
+            exists: true,
+            message: 'Username already exists'
+        });
+    }
+
+    res.status(200).json({
+        status: 'success',
+        exists: false,
+        message: 'Username is available'
+    });
+});
+
+// Check if an email already exists
+exports.checkEmail = catchAsync(async (req, res, next) => {
+    const { email } = req.params;
+    const user = await User.findOne({ email });
+
+    if (user) {
+        return res.status(200).json({
+            status: 'success',
+            exists: true,
+            message: 'Email already exists'
+        });
+    }
+
+    res.status(200).json({
+        status: 'success',
+        exists: false,
+        message: 'Email is available'
+    });
+});
 
 exports.uploadProfilePhoto = async (req, res) => {
     try {

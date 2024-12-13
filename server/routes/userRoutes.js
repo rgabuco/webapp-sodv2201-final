@@ -24,6 +24,12 @@ router
     .patch(userController.updateUser)
     .delete(authController.isAdmin, userController.deleteUser); //admin only
 
+// Route to check if a username already exists
+router.get('/username/:username', userController.checkUsername);
+
+// Route to check if an email already exists
+router.get('/email/:email', userController.checkEmail);
+
 // Route to get all courses of a user by ID
 router
     .route('/:id/courses')

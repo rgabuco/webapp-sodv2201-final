@@ -60,6 +60,16 @@ function Signup() {
         },
     });
 
+    const checkIfExists = async (field, value) => {
+        try {
+            const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/api/v1/users/${field}/${value}`);
+            return response.data.exists ? `${field.charAt(0).toUpperCase() + field.slice(1)} already exists` : true;
+        } catch (error) {
+            console.error(`Error checking ${field}:`, error);
+            return `Error checking ${field}`;
+        }
+    };
+
     const onSubmit = async formData => {
         const formattedData = {
             username: formData.username,
@@ -131,6 +141,7 @@ function Signup() {
                                         required: "Please provide a username",
                                         minLength: { value: 4, message: "Username must be at least 4 characters long" },
                                         maxLength: { value: 50, message: "Username must be at most 50 characters long" },
+                                        validate: value => checkIfExists("username", value),
                                     }}
                                     render={({ field, fieldState }) => (
                                         <TextField
@@ -171,7 +182,10 @@ function Signup() {
                                     control={control}
                                     rules={{
                                         required: "Please provide your email",
-                                        validate: value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || "Please provide a valid email",
+                                        validate: {
+                                            emailFormat: value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || "Please provide a valid email",
+                                            emailExists: value => checkIfExists("email", value),
+                                        },
                                     }}
                                     render={({ field, fieldState }) => (
                                         <TextField
